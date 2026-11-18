@@ -88,4 +88,17 @@ struct SessionStoreNavigationTests {
         store.handle(AgentEvent(rowID: session.id, kind: .sessionStarted, conversationID: "c2"))
         #expect(store.sessions[0].workingDirectory == nil)
     }
+
+    @Test func newSessionAsksWhenTheDropdownHasNoUsableRepo() {
+        let store = makeStore()
+        store.newSession()
+        #expect(store.isPickerPresented)
+        #expect(store.sessions.isEmpty)
+
+        store.isPickerPresented = false
+        store.settings.ticketRepoPath = "/nonexistent/repo-\(UUID())"
+        store.newSession()
+        #expect(store.isPickerPresented)
+        #expect(store.sessions.isEmpty)
+    }
 }

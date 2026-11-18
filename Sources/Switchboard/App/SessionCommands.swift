@@ -5,8 +5,10 @@ struct SessionCommands: Commands {
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
-            Button("New Session…") { store.isPickerPresented = true }
+            Button("New Session") { store.newSession() }
                 .keyboardShortcut("n", modifiers: .command)
+            Button("New Session In…") { store.isPickerPresented = true }
+                .keyboardShortcut("n", modifiers: [.command, .shift])
         }
     }
 }

@@ -91,6 +91,17 @@ final class SessionStore {
         }
     }
 
+    /// "+" and Cmd-N: start right away in the repo dropdown's repo with the
+    /// default agent, or open the picker when the dropdown is None or its
+    /// repo is gone.
+    func newSession() {
+        if let repo = settings.ticketRepo {
+            create(.repo(repo), agent: settings.defaultAgent)
+        } else {
+            isPickerPresented = true
+        }
+    }
+
     /// A scratch row whose shell runs `command` instead of an agent, e.g.
     /// `gh auth login --web`. The agent can be started there afterwards.
     func startCommandSession(_ command: String, title: String, agent: Agent) {

@@ -4,6 +4,7 @@ import SwiftUI
 struct SearchHeaderView: View {
     @Environment(SessionStore.self) private var store
     @Environment(LinearAccount.self) private var linear
+    @Environment(AppSettings.self) private var settings
     @Bindable var search: TicketSearchModel
     var onSubmit: () -> Void
 
@@ -17,11 +18,13 @@ struct SearchHeaderView: View {
                     .onExitCommand { search.clear() }
                 RepoDropdown()
                 Button {
-                    store.isPickerPresented = true
+                    store.newSession()
                 } label: {
                     Image(systemName: "plus")
                 }
-                .help("New session (⌘N)")
+                .help(settings.ticketRepoPath == nil
+                      ? "New session (⌘N)"
+                      : "New session in the selected repo (⌘N); ⇧⌘N to choose")
             }
             if !linear.isConnected {
                 LinearSignInHint()
