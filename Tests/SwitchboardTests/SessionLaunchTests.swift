@@ -21,6 +21,17 @@ struct SessionLaunchTests {
                 == #"codex resume -c "$SWITCHBOARD_CODEX_HOOKS" -c "$SWITCHBOARD_CODEX_NOTIFY" id"#)
     }
 
+    @Test func terminalRowsOpenABareShellAndNeverResume() {
+        var session = Session(kind: .folder, folderPath: "/repo", agent: .terminal)
+        #expect(Agent.terminal.launchCommand(for: .folder, hooks: hooks) == nil)
+        #expect(SessionLaunch.fresh(session, hooks: hooks) == SessionLaunch(directory: "/repo", command: nil))
+        session.agentConversationID = "stray"
+        #expect(SessionLaunch.reopen(session, hooks: hooks, directoryExists: { _ in true })
+                == SessionLaunch(directory: "/repo", command: nil))
+        session.ticketID = "XYZ-1"
+        #expect(!session.canMoveToWorktree)
+    }
+
     @Test func unsafeConversationIDsAreQuoted() {
         #expect(Agent.claudeCode.resumeCommand(conversationID: "a b;rm") == "claude --resume 'a b;rm'")
     }

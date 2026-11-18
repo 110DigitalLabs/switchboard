@@ -1,11 +1,13 @@
 import Foundation
 
-/// A coding-agent CLI that Switchboard can launch in a session's terminal.
+/// A coding-agent CLI that Switchboard can launch in a session's terminal,
+/// or `.terminal` for a plain login shell with no agent.
 enum Agent: String, Codable, CaseIterable, Identifiable, Sendable {
     case claudeCode
     case codex
     case geminiCLI
     case cursorAgent
+    case terminal
 
     var id: String { rawValue }
 
@@ -15,15 +17,18 @@ enum Agent: String, Codable, CaseIterable, Identifiable, Sendable {
         case .codex: "Codex"
         case .geminiCLI: "Gemini CLI"
         case .cursorAgent: "Cursor Agent"
+        case .terminal: "Terminal (no agent)"
         }
     }
 
-    var executable: String {
+    /// The agent's CLI, or nil for a plain terminal.
+    var executable: String? {
         switch self {
         case .claudeCode: "claude"
         case .codex: "codex"
         case .geminiCLI: "gemini"
         case .cursorAgent: "cursor-agent"
+        case .terminal: nil
         }
     }
 
@@ -35,7 +40,7 @@ enum Agent: String, Codable, CaseIterable, Identifiable, Sendable {
         switch self {
         case .claudeCode: "-w"
         case .codex: "--worktree"
-        case .geminiCLI, .cursorAgent: nil
+        case .geminiCLI, .cursorAgent, .terminal: nil
         }
     }
 
@@ -47,9 +52,11 @@ enum Agent: String, Codable, CaseIterable, Identifiable, Sendable {
 
     /// The command line typed into the session's shell to start the agent,
     /// with Switchboard's hooks loaded when they are installed. An initial
-    /// prompt is submitted by the agent as its first message.
+    /// prompt is submitted by the agent as its first message. Nil for a plain
+    /// terminal, whose shell is left at its prompt.
     func launchCommand(for kind: SessionKind, hooks: HookInstallation? = nil,
-                       options: AgentLaunchOptions = AgentLaunchOptions()) -> String {
+                       options: AgentLaunchOptions = AgentLaunchOptions()) -> String? {
+        guard let executable else { return nil }
         var words = [executable]
         words += hooks?.launchArguments(for: self) ?? []
         if let prompt = options.prompt, !prompt.isEmpty {
@@ -70,7 +77,7 @@ enum Agent: String, Codable, CaseIterable, Identifiable, Sendable {
     var planModeArguments: [String]? {
         switch self {
         case .claudeCode: ["--permission-mode", "plan"]
-        case .codex, .geminiCLI, .cursorAgent: nil
+        case .codex, .geminiCLI, .cursorAgent, .terminal: nil
         }
     }
 
@@ -79,7 +86,7 @@ enum Agent: String, Codable, CaseIterable, Identifiable, Sendable {
     private func promptArguments(_ quoted: String) -> [String] {
         switch self {
         case .geminiCLI: ["-i", quoted]
-        case .claudeCode, .codex, .cursorAgent: [quoted]
+        case .claudeCode, .codex, .cursorAgent, .terminal: [quoted]
         }
     }
 }

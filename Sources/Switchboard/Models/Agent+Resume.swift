@@ -8,14 +8,16 @@ extension Agent {
     /// - `codex resume <id>` (a subcommand; it takes `-c` overrides itself)
     /// - `gemini --resume <id>`
     /// - `cursor-agent --resume <id>`
-    func resumeCommand(conversationID: String, hooks: HookInstallation? = nil) -> String {
+    /// Nil for a plain terminal, which has no conversation to resume.
+    func resumeCommand(conversationID: String, hooks: HookInstallation? = nil) -> String? {
+        guard let executable else { return nil }
         let hookArguments = hooks?.launchArguments(for: self) ?? []
         let id = ShellQuote.quoteIfNeeded(conversationID)
         let words: [String]
         switch self {
         case .codex:
             words = [executable, "resume"] + hookArguments + [id]
-        case .claudeCode, .geminiCLI, .cursorAgent:
+        case .claudeCode, .geminiCLI, .cursorAgent, .terminal:
             words = [executable] + hookArguments + ["--resume", id]
         }
         return words.joined(separator: " ")

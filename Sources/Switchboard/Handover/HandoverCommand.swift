@@ -16,14 +16,16 @@ enum HandoverCommand {
     static func summaryArguments(agent: Agent, conversationID: String) -> [String]? {
         switch agent {
         case .claudeCode:
-            [agent.executable, "-p", "--resume", conversationID, "--fork-session",
+            ["claude", "-p", "--resume", conversationID, "--fork-session",
              "--no-session-persistence", summaryPrompt]
         case .codex:
-            [agent.executable, "exec", "fork", "--ephemeral", "--skip-git-repo-check",
+            ["codex", "exec", "fork", "--ephemeral", "--skip-git-repo-check",
              conversationID, summaryPrompt]
         case .geminiCLI, .cursorAgent:
             // Both can resume headlessly, but only by appending to the
             // original conversation.
+            nil
+        case .terminal:
             nil
         }
     }
@@ -88,8 +90,8 @@ extension Session {
         return next
     }
 
-    /// Folder and temp sessions with something to carry over.
+    /// Folder and temp agent sessions with something to carry over.
     var canMoveToWorktree: Bool {
-        (kind == .folder || kind == .temp) && (ticketID != nil || agentConversationID != nil)
+        agent != .terminal && (kind == .folder || kind == .temp) && (ticketID != nil || agentConversationID != nil)
     }
 }

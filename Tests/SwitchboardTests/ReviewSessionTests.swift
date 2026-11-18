@@ -26,7 +26,7 @@ struct ReviewSessionTests {
         #expect(session.kind == .folder && session.folderPath == "/home/work/api")
         #expect(session.prURLs == ["https://github.com/Acme/api/pull/42"])
         #expect(session.ticketID == nil)
-        #expect(!session.launchCommand(hooks: nil).contains("-w"))
+        #expect(session.launchCommand(hooks: nil)?.contains("-w") == false)
     }
 
     @Test func tempSessionGetsReviewIcon() {

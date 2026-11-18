@@ -39,7 +39,7 @@ struct HookInstallation: Sendable, Equatable {
             if injectCodexNotify { env[Key.codexNotify] = CodexHookConfig.notifyOverride }
         case .geminiCLI:
             if injectGeminiDefaults { env[Key.geminiDefaults] = geminiSettingsPath }
-        case .cursorAgent:
+        case .cursorAgent, .terminal:
             break
         }
         return env
@@ -54,7 +54,7 @@ struct HookInstallation: Sendable, Equatable {
         case .codex:
             ["-c", "\"$\(Key.codexHooks)\""]
                 + (injectCodexNotify ? ["-c", "\"$\(Key.codexNotify)\""] : [])
-        case .geminiCLI, .cursorAgent:
+        case .geminiCLI, .cursorAgent, .terminal:
             // Gemini picks its hooks up from the environment; Cursor's agent
             // CLI has no per-launch way to add hooks (see CursorHookConfig).
             []

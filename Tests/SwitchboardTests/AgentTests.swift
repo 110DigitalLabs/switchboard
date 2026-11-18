@@ -27,6 +27,7 @@ struct AgentTests {
         let url = URL(fileURLWithPath: "/repo")
         #expect(NewSessionTarget.kind(forFolder: url, agent: .claudeCode, isRepo: { _ in true }) == .worktree)
         #expect(NewSessionTarget.kind(forFolder: url, agent: .geminiCLI, isRepo: { _ in true }) == .folder)
+        #expect(NewSessionTarget.kind(forFolder: url, agent: .terminal, isRepo: { _ in true }) == .folder)
         #expect(NewSessionTarget.kind(forFolder: url, agent: .claudeCode, isRepo: { _ in false }) == .folder)
     }
 

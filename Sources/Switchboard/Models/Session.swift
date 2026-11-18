@@ -48,7 +48,7 @@ struct Session: Identifiable, Hashable, Sendable {
         set { activity.state = newValue }
     }
 
-    func launchCommand(hooks: HookInstallation?, options: AgentLaunchOptions = AgentLaunchOptions()) -> String {
+    func launchCommand(hooks: HookInstallation?, options: AgentLaunchOptions = AgentLaunchOptions()) -> String? {
         agent.launchCommand(for: kind, hooks: hooks, options: options)
     }
 }
