@@ -19,11 +19,20 @@ targets:
     sources: [Sources/Switchboard]
     dependencies:
       - package: SwiftTerm
+    entitlements:
+      path: Sources/Switchboard/Switchboard.entitlements
+      properties:
+        # The hardened runtime blocks audio input, for child processes too,
+        # without this.
+        com.apple.security.device.audio-input: true
     info:
       path: Sources/Switchboard/Info.plist
       properties:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # Agents run in Switchboard's terminals, so macOS asks for the
+        # microphone on Switchboard's behalf (Claude Code's voice input).
+        NSMicrophoneUsageDescription: Agents running in Switchboard's terminals, such as Claude Code's voice input, use the microphone.
         CFBundleURLTypes:
           - CFBundleURLName: dev.switchboard.Switchboard.oauth
             CFBundleURLSchemes: [switchboard]

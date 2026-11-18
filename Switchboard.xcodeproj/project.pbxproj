@@ -205,6 +205,7 @@
 		09C4FB1D53D81E4B2BCA8FEA /* MCPLinearServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPLinearServiceTests.swift; sourceTree = "<group>"; };
 		0A53603D58DD4D7A848C1FC8 /* ConversationHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationHistory.swift; sourceTree = "<group>"; };
 		0A98A7F3830B95CE92D89CB1 /* NavigationKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationKey.swift; sourceTree = "<group>"; };
+		0B219A9B77BFA9890B78BDFC /* Switchboard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Switchboard.entitlements; sourceTree = "<group>"; };
 		0BBE2B4E1A55E1801BA4BAC3 /* GHJSONTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GHJSONTests.swift; sourceTree = "<group>"; };
 		0C5EF53BD345DB47363DA6B4 /* TicketSessionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketSessionsTests.swift; sourceTree = "<group>"; };
 		0CCDEA6C2AAF2C4F9239874F /* TicketFolder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketFolder.swift; sourceTree = "<group>"; };
@@ -425,6 +426,7 @@
 			children = (
 				A550DE355AD05AFC9A44B5C1 /* Assets.xcassets */,
 				7ECBB8EE223A4466E7914D2A /* Info.plist */,
+				0B219A9B77BFA9890B78BDFC /* Switchboard.entitlements */,
 				1C147B8EAECAF4E33CADBB18 /* App */,
 				E01EF81FFB8DD00D3323BC3A /* Cleanup */,
 				4BD8E3CE1989447B1076B798 /* GitHub */,
@@ -1030,6 +1032,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/Switchboard/Switchboard.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -1129,6 +1132,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/Switchboard/Switchboard.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
