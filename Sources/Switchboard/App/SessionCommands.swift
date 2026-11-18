@@ -9,6 +9,8 @@ struct SessionCommands: Commands {
                 .keyboardShortcut("n", modifiers: .command)
             Button("New Session In…") { store.isPickerPresented = true }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
+            Button("Resume Existing…") { store.isResumePresented = true }
+                .keyboardShortcut("o", modifiers: [.command, .shift])
         }
     }
 }

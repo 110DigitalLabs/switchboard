@@ -51,6 +51,11 @@ struct NewSessionSheet: View {
 
             HStack {
                 Button("Choose Other Folder…") { chooseFolder() }
+                Button("Resume Existing…") {
+                    dismiss()
+                    // After this sheet is gone: one sheet at a time.
+                    DispatchQueue.main.async { store.isResumePresented = true }
+                }
                 Spacer()
                 Button("Cancel", role: .cancel) { dismiss() }
                     .keyboardShortcut(.cancelAction)

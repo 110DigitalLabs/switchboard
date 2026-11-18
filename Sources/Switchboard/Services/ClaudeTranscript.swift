@@ -11,6 +11,13 @@ enum ClaudeTranscript {
     }
 
     static func title(from data: Data) -> String? {
+        let found = titles(from: data)
+        return found.custom ?? found.generated
+    }
+
+    /// The latest custom and generated titles in `data`, which may be a
+    /// slice of a transcript: lines cut off at either end are skipped.
+    static func titles(from data: Data) -> (custom: String?, generated: String?) {
         var custom: String?
         var generated: String?
         let customMarker = Data(#""type":"custom-title""#.utf8)
@@ -26,7 +33,7 @@ enum ClaudeTranscript {
                 generated = value
             }
         }
-        return custom ?? generated
+        return (custom, generated)
     }
 
     private static func nonEmpty(_ value: Any?) -> String? {

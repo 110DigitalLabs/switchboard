@@ -29,8 +29,12 @@ struct SessionListView: View {
         .modifier(CloseFolderDialog())
         .overlay {
             if store.sessions.isEmpty {
-                Text("No sessions")
-                    .foregroundStyle(.secondary)
+                VStack(spacing: 8) {
+                    Text("No sessions")
+                        .foregroundStyle(.secondary)
+                    Button("Resume Existing…") { store.isResumePresented = true }
+                        .help("Reopen a recent Claude Code or Codex conversation here")
+                }
             }
         }
     }

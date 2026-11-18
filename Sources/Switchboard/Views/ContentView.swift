@@ -23,6 +23,9 @@ struct ContentView: View {
         .sheet(isPresented: $store.isPickerPresented) {
             NewSessionSheet()
         }
+        .sheet(isPresented: $store.isResumePresented) {
+            ResumeExistingSheet()
+        }
         .sheet(isPresented: Binding(
             get: { store.handoverRequestID != nil },
             set: { if !$0 { store.handoverRequestID = nil } }

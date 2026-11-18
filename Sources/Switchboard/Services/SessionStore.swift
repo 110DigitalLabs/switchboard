@@ -28,6 +28,9 @@ final class SessionStore {
     /// The temp or scratch row whose "Delete folder?" dialog is open.
     var closeRequestID: UUID?
 
+    /// The "Resume Existing…" sheet.
+    var isResumePresented = false
+
     private(set) var repos: [Repo] = []
     private(set) var isScanningRepos = false
 
