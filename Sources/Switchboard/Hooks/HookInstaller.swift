@@ -45,12 +45,14 @@ enum HookInstaller {
         )
     }
 
-    /// Unix socket paths are limited to 104 bytes on macOS; fall back to a
-    /// short per-user path when the home folder is unusually long.
+    /// Unix socket paths are limited to 104 bytes on macOS; fall back to the
+    /// per-user temporary directory (mode 0700 under /var/folders, never the
+    /// shared /tmp) when the home folder is unusually long.
     static func socketPath(in directory: URL) -> String {
         let preferred = directory.appendingPathComponent("hook.sock").path
         if preferred.utf8.count < 100 { return preferred }
-        return "/tmp/switchboard-\(getuid()).sock"
+        return URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+            .appendingPathComponent("switchboard-hook.sock").path
     }
 
     private static func writeJSON(_ object: [String: Any], to url: URL) throws {

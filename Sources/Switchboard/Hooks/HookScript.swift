@@ -54,20 +54,16 @@ enum HookScript {
       printf '%s' "$1" | /usr/bin/plutil -extract "$2" raw -o - - 2>/dev/null
     }
 
-    # The status line command the user configured, most specific file first,
-    # matching Claude Code's own precedence (local > project > user).
+    # The user-level status line command only. Project-level settings come from
+    # a directory named in the payload, and running commands from them would
+    # bypass Claude Code's own workspace-trust check, so they are not consulted.
     user_statusline_command() {
-      dir=$(json_value "$1" workspace.project_dir) || dir=$(json_value "$1" cwd) || dir=
       config=${CLAUDE_CONFIG_DIR:-$HOME/.claude}
-      for f in "$dir/.claude/settings.local.json" "$dir/.claude/settings.json" "$config/settings.json"; do
-        [ -n "$dir" ] || case "$f" in /.claude/*) continue ;; esac
-        [ -f "$f" ] || continue
-        cmd=$(/usr/bin/plutil -extract statusLine.command raw -o - "$f" 2>/dev/null) || continue
-        case "$cmd" in ""|*switchboard-hook*) continue ;; esac
-        printf '%s' "$cmd"
-        return 0
-      done
-      return 1
+      f="$config/settings.json"
+      [ -f "$f" ] || return 1
+      cmd=$(/usr/bin/plutil -extract statusLine.command raw -o - "$f" 2>/dev/null) || return 1
+      case "$cmd" in ""|*switchboard-hook*) return 1 ;; esac
+      printf '%s' "$cmd"
     }
 
     case "$event" in
