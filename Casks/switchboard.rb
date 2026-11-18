@@ -1,6 +1,6 @@
 cask "switchboard" do
   version "0.1.0"
-  sha256 "REPLACE_WITH_SHA256_FROM_RELEASE_SCRIPT"
+  sha256 "b4c6d5e4df6a598b47639792844296d04ce4a46b2cd25473a4733a0b749f63b9"
 
   url "https://github.com/110DigitalLabs/switchboard/releases/download/v#{version}/Switchboard-#{version}.zip"
   name "Switchboard"
