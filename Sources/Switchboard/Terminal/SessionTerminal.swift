@@ -1,0 +1,95 @@
+import AppKit
+import SwiftTerm
+
+/// One session's terminal view and shell process. Lives as long as the row,
+/// independent of whether it is on screen.
+@MainActor
+final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
+    let view: LocalProcessTerminalView
+    var onExit: ((Int32?) -> Void)?
+
+    private let rowID: UUID
+    private let folderPath: String
+    private let launchCommand: String
+    private var pendingCommand: String?
+
+    init(session: Session) {
+        rowID = session.id
+        folderPath = session.folderPath
+        launchCommand = session.launchCommand
+        view = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        super.init()
+        view.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+        view.processDelegate = self
+    }
+
+    var isRunning: Bool { view.process?.running ?? false }
+
+    /// Starts the login shell in the session folder, then types the agent's
+    /// launch command into it so it lands in shell history and can be re-run.
+    func start() {
+        let base = ProcessInfo.processInfo.environment
+        let shell = ShellEnvironment.loginShell(from: base)
+        let env = ShellEnvironment.variables(base: base, rowID: rowID)
+        pendingCommand = launchCommand
+
+        view.setProcessOutputHandler { [weak self] in
+            Task { @MainActor in self?.shellProducedOutput() }
+        }
+        view.startProcess(
+            executable: shell,
+            args: [],
+            environment: ShellEnvironment.pairs(env),
+            execName: ShellEnvironment.loginExecName(for: shell),
+            currentDirectory: folderPath
+        )
+        // Shells with silent startup files print nothing before the prompt.
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            self?.typePendingCommand()
+        }
+    }
+
+    /// Hangs up the shell the way closing a terminal window does; interactive
+    /// shells ignore SIGTERM.
+    func terminate() {
+        pendingCommand = nil
+        guard isRunning, let pid = view.process?.shellPid, pid > 0 else { return }
+        kill(pid, SIGHUP)
+    }
+
+    private func shellProducedOutput() {
+        view.setProcessOutputHandler(nil)
+        // Give the line editor a moment to take over the TTY after the prompt.
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(150))
+            self?.typePendingCommand()
+        }
+    }
+
+    private func typePendingCommand() {
+        guard let command = pendingCommand, isRunning else { return }
+        pendingCommand = nil
+        view.send(txt: command + "\r")
+    }
+
+    // MARK: LocalProcessTerminalViewDelegate
+
+    func sizeChanged(source: LocalProcessTerminalView, newCols: Int, newRows: Int) {}
+
+    func setTerminalTitle(source: LocalProcessTerminalView, title: String) {}
+
+    func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {}
+
+    func processTerminated(source: TerminalView, exitCode: Int32?) {
+        pendingCommand = nil
+        let status = exitCode.map { "exit code \($0)" } ?? "signal"
+        view.feed(text: "\r\n[Shell exited (\(status)). Right-click the session to restart it.]\r\n")
+        onExit?(exitCode)
+    }
+
+    func processFailedToStart(source: TerminalView, error: LocalProcessError) {
+        pendingCommand = nil
+        onExit?(nil)
+    }
+}
