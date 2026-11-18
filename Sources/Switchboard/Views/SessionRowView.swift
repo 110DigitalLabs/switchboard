@@ -11,13 +11,26 @@ struct SessionRowView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(session.title)
                     .lineLimit(1)
-                Text("\(abbreviated(session.folderPath)) · \(session.agent.displayName)")
+                Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
+                if let status = session.statusText {
+                    Text(status)
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
             }
             Spacer(minLength: 4)
+            if session.hasBadge {
+                Circle()
+                    .fill(.red)
+                    .frame(width: 8, height: 8)
+                    .accessibilityLabel("Unread")
+            }
             StateIndicator(state: session.workingState)
         }
         .padding(.vertical, 2)
@@ -30,6 +43,11 @@ struct SessionRowView: View {
         case .scratch: "note.text"
         case .temp: "clock"
         }
+    }
+
+    private var subtitle: String {
+        let agent = session.agentModel.map { "\(session.agent.displayName) (\($0))" } ?? session.agent.displayName
+        return "\(abbreviated(session.folderPath)) · \(agent)"
     }
 
     private func abbreviated(_ path: String) -> String {
@@ -53,6 +71,7 @@ private struct StateIndicator: View {
                 .fill(color)
                 .frame(width: 7, height: 7)
                 .help(state.label)
+                .accessibilityLabel(state.label)
         }
     }
 

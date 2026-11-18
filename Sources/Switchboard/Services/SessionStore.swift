@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import Observation
 
 /// Owns the session rows and their live terminals.
@@ -6,7 +6,9 @@ import Observation
 @Observable
 final class SessionStore {
     private(set) var sessions: [Session] = []
-    var selectedID: UUID?
+    var selectedID: UUID? {
+        didSet { if let selectedID { markViewed(selectedID) } }
+    }
     var isPickerPresented = false
     var errorMessage: String?
 
@@ -14,10 +16,14 @@ final class SessionStore {
     private(set) var isScanningRepos = false
 
     let settings: AppSettings
-    @ObservationIgnored let terminals = TerminalRegistry()
+    @ObservationIgnored let terminals: TerminalRegistry
+    @ObservationIgnored var notifier: Notifier?
+    /// Whether the app is frontmost; injectable for tests.
+    @ObservationIgnored var isAppActive: () -> Bool = { NSApp?.isActive ?? false }
 
-    init(settings: AppSettings) {
+    init(settings: AppSettings, hooks: HookInstallation? = nil) {
         self.settings = settings
+        terminals = TerminalRegistry(hooks: hooks)
     }
 
     var mainSessions: [Session] { sessions.filter { !$0.kind.isBottomGrouped } }
@@ -49,8 +55,10 @@ final class SessionStore {
         }
     }
 
-    private func add(_ session: Session) {
+    /// Visible for tests; normal creation goes through `create`.
+    func add(_ session: Session, startTerminal: Bool = true) {
         sessions.append(session)
+        guard startTerminal else { return }
         let terminal = terminals.makeTerminal(for: session)
         terminal.onExit = { [weak self] _ in self?.setState(.exited, for: session.id) }
         terminal.start()
@@ -75,6 +83,21 @@ final class SessionStore {
     private func setState(_ state: WorkingState, for id: UUID) {
         guard let index = sessions.firstIndex(where: { $0.id == id }) else { return }
         sessions[index].workingState = state
+    }
+
+    /// Replaces a row's value; no-op for rows that are gone or unchanged.
+    func update(_ session: Session) {
+        guard let index = sessions.firstIndex(where: { $0.id == session.id }),
+              sessions[index] != session else { return }
+        sessions[index] = session
+    }
+
+    /// The user is looking at this row: clear its badge and settle "finished".
+    func markViewed(_ id: UUID) {
+        notifier?.clear(rowID: id)
+        guard let index = sessions.firstIndex(where: { $0.id == id }) else { return }
+        if sessions[index].hasBadge { sessions[index].hasBadge = false }
+        if sessions[index].workingState == .finished { sessions[index].activity.markViewed() }
     }
 
     // MARK: Repos

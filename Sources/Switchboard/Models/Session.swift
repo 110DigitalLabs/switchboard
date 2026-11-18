@@ -13,7 +13,12 @@ struct Session: Codable, Identifiable, Hashable, Sendable {
     var agentTitle: String?
     var ticketID: String?
     var prURLs: [String] = []
-    var workingState: WorkingState = .idle
+    var agentModel: String?
+    /// The agent's latest status-line text, on one line without escapes.
+    var statusText: String?
+    var activity = RowActivity()
+    /// Shown on the row from a finished / needs-input event until it is viewed.
+    var hasBadge = false
 
     init(id: UUID = UUID(), kind: SessionKind, folderPath: String, agent: Agent, createdAt: Date = Date()) {
         self.id = id
@@ -27,5 +32,12 @@ struct Session: Codable, Identifiable, Hashable, Sendable {
 
     var title: String { agentTitle ?? ticketID ?? folderName }
 
-    var launchCommand: String { agent.launchCommand(for: kind) }
+    var workingState: WorkingState {
+        get { activity.state }
+        set { activity.state = newValue }
+    }
+
+    func launchCommand(hooks: HookInstallation?) -> String {
+        agent.launchCommand(for: kind, hooks: hooks)
+    }
 }

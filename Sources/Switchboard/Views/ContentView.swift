@@ -17,6 +17,9 @@ struct ContentView: View {
                 .layoutPriority(1)
         }
         .frame(minWidth: 800, minHeight: 500)
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            if let id = store.selectedID { store.markViewed(id) }
+        }
         .sheet(isPresented: $store.isPickerPresented) {
             NewSessionSheet()
         }

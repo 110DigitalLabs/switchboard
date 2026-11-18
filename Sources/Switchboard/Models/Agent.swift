@@ -41,11 +41,14 @@ enum Agent: String, Codable, CaseIterable, Identifiable, Sendable {
 
     var supportsWorktree: Bool { worktreeFlag != nil }
 
-    /// The command line typed into the session's shell to start the agent.
-    func launchCommand(for kind: SessionKind) -> String {
+    /// The command line typed into the session's shell to start the agent,
+    /// with Switchboard's hooks loaded when they are installed.
+    func launchCommand(for kind: SessionKind, hooks: HookInstallation? = nil) -> String {
+        var words = [executable]
+        words += hooks?.launchArguments(for: self) ?? []
         if kind == .worktree, let flag = worktreeFlag {
-            return "\(executable) \(flag)"
+            words.append(flag)
         }
-        return executable
+        return words.joined(separator: " ")
     }
 }

@@ -18,8 +18,9 @@ enum ShellEnvironment {
         "-" + URL(fileURLWithPath: shell).lastPathComponent
     }
 
-    static func variables(base: [String: String], rowID: UUID) -> [String: String] {
-        var env = base
+    static func variables(base: [String: String], rowID: UUID,
+                          extra: [String: String] = [:]) -> [String: String] {
+        var env = base.merging(extra) { _, new in new }
         env["TERM"] = "xterm-256color"
         env["COLORTERM"] = "truecolor"
         if env["LANG"]?.isEmpty ?? true {

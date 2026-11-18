@@ -30,6 +30,24 @@ struct AgentTests {
         #expect(NewSessionTarget.kind(forFolder: url, agent: .claudeCode, isRepo: { _ in false }) == .folder)
     }
 
+    @Test func launchCommandsLoadSwitchboardHooksBeforeWorktreeFlag() {
+        let hooks = HookInstallation(helperPath: "/a b/hook", socketPath: "/s", claudeSettingsPath: "/a b/c.json",
+                                     geminiSettingsPath: "/g.json", injectCodexNotify: true, injectGeminiDefaults: true)
+        #expect(Agent.claudeCode.launchCommand(for: .worktree, hooks: hooks)
+                == #"claude --settings "$SWITCHBOARD_CLAUDE_SETTINGS" -w"#)
+        #expect(Agent.codex.launchCommand(for: .folder, hooks: hooks)
+                == #"codex -c "$SWITCHBOARD_CODEX_HOOKS" -c "$SWITCHBOARD_CODEX_NOTIFY""#)
+        #expect(Agent.geminiCLI.launchCommand(for: .folder, hooks: hooks) == "gemini")
+        #expect(hooks.environment(for: .geminiCLI)["GEMINI_CLI_SYSTEM_DEFAULTS_PATH"] == "/g.json")
+        #expect(hooks.environment(for: .claudeCode)["SWITCHBOARD_CLAUDE_SETTINGS"] == "/a b/c.json")
+
+        var noNotify = hooks
+        noNotify.injectCodexNotify = false
+        #expect(Agent.codex.launchCommand(for: .worktree, hooks: noNotify)
+                == #"codex -c "$SWITCHBOARD_CODEX_HOOKS" --worktree"#)
+        #expect(noNotify.environment(for: .codex)["SWITCHBOARD_CODEX_NOTIFY"] == nil)
+    }
+
     @Test func titleFallsBackFromAgentTitleToTicketToFolderName() {
         var session = Session(kind: .folder, folderPath: "/tmp/api", agent: .codex)
         #expect(session.title == "api")

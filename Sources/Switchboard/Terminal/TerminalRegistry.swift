@@ -5,11 +5,16 @@ import Foundation
 @MainActor
 final class TerminalRegistry {
     private var terminals: [UUID: SessionTerminal] = [:]
+    private let hooks: HookInstallation?
+
+    init(hooks: HookInstallation?) {
+        self.hooks = hooks
+    }
 
     func terminal(for id: UUID) -> SessionTerminal? { terminals[id] }
 
     func makeTerminal(for session: Session) -> SessionTerminal {
-        let terminal = SessionTerminal(session: session)
+        let terminal = SessionTerminal(session: session, hooks: hooks)
         terminals[session.id] = terminal
         return terminal
     }

@@ -4,11 +4,16 @@ import SwiftUI
 struct SwitchboardApp: App {
     @State private var settings: AppSettings
     @State private var store: SessionStore
+    private let hookServices: HookServices
 
     init() {
         let settings = AppSettings()
+        let hookServices = HookServices()
+        let store = SessionStore(settings: settings, hooks: hookServices.installation)
+        hookServices.connect(to: store)
+        self.hookServices = hookServices
         _settings = State(initialValue: settings)
-        _store = State(initialValue: SessionStore(settings: settings))
+        _store = State(initialValue: store)
     }
 
     var body: some Scene {

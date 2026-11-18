@@ -11,12 +11,14 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
     private let rowID: UUID
     private let folderPath: String
     private let launchCommand: String
+    private let extraEnvironment: [String: String]
     private var pendingCommand: String?
 
-    init(session: Session) {
+    init(session: Session, hooks: HookInstallation?) {
         rowID = session.id
         folderPath = session.folderPath
-        launchCommand = session.launchCommand
+        launchCommand = session.launchCommand(hooks: hooks)
+        extraEnvironment = hooks?.environment(for: session.agent) ?? [:]
         view = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         super.init()
         view.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
@@ -30,7 +32,7 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
     func start() {
         let base = ProcessInfo.processInfo.environment
         let shell = ShellEnvironment.loginShell(from: base)
-        let env = ShellEnvironment.variables(base: base, rowID: rowID)
+        let env = ShellEnvironment.variables(base: base, rowID: rowID, extra: extraEnvironment)
         pendingCommand = launchCommand
 
         view.setProcessOutputHandler { [weak self] in
