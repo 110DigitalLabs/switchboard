@@ -30,9 +30,7 @@ enum ProcessRunner {
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = arguments
         if let directory { process.currentDirectoryURL = URL(fileURLWithPath: directory, isDirectory: true) }
-        var env = environment ?? ProcessInfo.processInfo.environment
-        env.removeValue(forKey: ShellEnvironment.rowIDKey)
-        process.environment = env
+        process.environment = ShellEnvironment.scrubbed(environment ?? ProcessInfo.processInfo.environment)
         let output = Pipe()
         let errors = Pipe()
         process.standardOutput = output
