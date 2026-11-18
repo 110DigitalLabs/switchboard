@@ -78,7 +78,7 @@ private struct CloseFolderDialog: ViewModifier {
     func body(content: Content) -> some View {
         let session = store.closeRequestID.flatMap { id in store.sessions.first { $0.id == id } }
         content.alert(
-            "Delete folder \((session?.folderPath ?? "") as NSString).abbreviatingWithTildeInPath)?",
+            "Delete folder \(((session?.folderPath ?? "") as NSString).abbreviatingWithTildeInPath)?",
             isPresented: Binding(get: { session != nil }, set: { if !$0 { store.closeRequestID = nil } }),
             presenting: session
         ) { session in

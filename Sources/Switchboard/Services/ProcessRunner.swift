@@ -13,6 +13,7 @@ enum ProcessRunner {
     enum Failure: Error, Equatable {
         case timedOut
         case couldNotLaunch(String)
+        case outputHeldOpen
     }
 
     /// Runs `executable` with `arguments`; never throws for a non-zero exit.
@@ -52,16 +53,25 @@ enum ProcessRunner {
         let seconds = Double(timeout.components.seconds) + Double(timeout.components.attoseconds) / 1e18
         DispatchQueue.global().asyncAfter(deadline: .now() + seconds, execute: killer)
 
-        // Drain stderr concurrently so a chatty command cannot fill the pipe.
+        // Drain both pipes on background threads. A process started by a shell
+        // rc file can inherit the pipes and hold them open after the command
+        // exits or is killed, so the reads are bounded rather than awaited.
+        let outputData = LockedValue(Data())
         let errorData = LockedValue(Data())
-        let errorRead = DispatchGroup()
-        DispatchQueue.global().async(group: errorRead) {
+        let reads = DispatchGroup()
+        DispatchQueue.global().async(group: reads) {
+            outputData.set(output.fileHandleForReading.readDataToEndOfFile())
+        }
+        DispatchQueue.global().async(group: reads) {
             errorData.set(errors.fileHandleForReading.readDataToEndOfFile())
         }
-        let data = output.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
         killer.cancel()
-        errorRead.wait()
+        if reads.wait(timeout: .now() + 2) == .timedOut {
+            // The pipes are held by a stray descendant: give up on the output.
+            throw timedOut.get() ? Failure.timedOut : Failure.outputHeldOpen
+        }
+        let data = outputData.get()
 
         if timedOut.get() { throw Failure.timedOut }
         return Output(status: process.terminationStatus, stdout: data,

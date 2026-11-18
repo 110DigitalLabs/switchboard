@@ -32,6 +32,8 @@ enum SummaryProcess {
             throw Failure(message: "The summary timed out.")
         } catch ProcessRunner.Failure.couldNotLaunch(let message) {
             throw Failure(message: message)
+        } catch ProcessRunner.Failure.outputHeldOpen {
+            throw Failure(message: "A process started by your shell kept the summary's output open.")
         }
         let text = afterMarker(output.stdoutText)
         guard output.status == 0, !text.isEmpty else {
