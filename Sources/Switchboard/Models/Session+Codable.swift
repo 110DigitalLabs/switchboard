@@ -7,7 +7,7 @@ import Foundation
 extension Session: Codable {
     private enum CodingKeys: String, CodingKey {
         case id, kind, folderPath, agent, createdAt
-        case agentConversationID, workingDirectory, agentTitle, ticketID
+        case agentConversationID, workingDirectory, agentTitle, ticketID, ticketTitle
         case linearProjectName, prURLs, agentModel
     }
 
@@ -24,6 +24,7 @@ extension Session: Codable {
         workingDirectory = Self.nonEmpty(try? c.decodeIfPresent(String.self, forKey: .workingDirectory))
         agentTitle = Self.nonEmpty(try? c.decodeIfPresent(String.self, forKey: .agentTitle))
         ticketID = Self.nonEmpty(try? c.decodeIfPresent(String.self, forKey: .ticketID))
+        ticketTitle = Self.nonEmpty(try? c.decodeIfPresent(String.self, forKey: .ticketTitle))
         linearProjectName = Self.nonEmpty(try? c.decodeIfPresent(String.self, forKey: .linearProjectName))
         prURLs = (try? c.decodeIfPresent([String].self, forKey: .prURLs)) ?? []
         agentModel = Self.nonEmpty(try? c.decodeIfPresent(String.self, forKey: .agentModel))
@@ -40,6 +41,7 @@ extension Session: Codable {
         try c.encodeIfPresent(workingDirectory, forKey: .workingDirectory)
         try c.encodeIfPresent(agentTitle, forKey: .agentTitle)
         try c.encodeIfPresent(ticketID, forKey: .ticketID)
+        try c.encodeIfPresent(ticketTitle, forKey: .ticketTitle)
         try c.encodeIfPresent(linearProjectName, forKey: .linearProjectName)
         if !prURLs.isEmpty { try c.encode(prURLs, forKey: .prURLs) }
         try c.encodeIfPresent(agentModel, forKey: .agentModel)

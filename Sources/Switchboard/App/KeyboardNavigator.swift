@@ -16,10 +16,11 @@ final class KeyboardNavigator {
     func install() {
         guard monitor == nil else { return }
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            // Local monitors are called on the main thread.
-            MainActor.assumeIsolated {
-                self?.handle(event) == true ? nil : event
-            }
+            // Local monitors are called on the main thread, so the event
+            // never actually crosses an isolation boundary.
+            nonisolated(unsafe) let mainThreadEvent = event
+            let consumed = MainActor.assumeIsolated { self?.handle(mainThreadEvent) == true }
+            return consumed ? nil : event
         }
     }
 

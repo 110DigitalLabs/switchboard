@@ -14,6 +14,8 @@ struct Session: Identifiable, Hashable, Sendable {
     var workingDirectory: String?
     var agentTitle: String?
     var ticketID: String?
+    /// The Linear issue's title; display stays agentTitle → ticketID → folder.
+    var ticketTitle: String?
     /// Filled in by the Linear integration (stage 4).
     var linearProjectName: String?
     var prURLs: [String] = []
@@ -41,7 +43,7 @@ struct Session: Identifiable, Hashable, Sendable {
         set { activity.state = newValue }
     }
 
-    func launchCommand(hooks: HookInstallation?) -> String {
-        agent.launchCommand(for: kind, hooks: hooks)
+    func launchCommand(hooks: HookInstallation?, options: AgentLaunchOptions = AgentLaunchOptions()) -> String {
+        agent.launchCommand(for: kind, hooks: hooks, options: options)
     }
 }

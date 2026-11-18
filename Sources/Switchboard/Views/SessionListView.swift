@@ -40,11 +40,17 @@ struct SessionListView: View {
     }
 
     private func row(_ entry: SessionListLayout.Entry) -> some View {
-        SessionRowView(session: entry.session, ticketLabel: entry.ticketLabel)
+        SessionRowView(session: entry.session, ticketLabel: entry.ticketLabel,
+                       handoverProgress: store.handoverProgress[entry.session.id])
             .tag(entry.session.id)
             .contextMenu {
                 Button("Restart Shell") { store.restartShell(entry.session.id) }
                     .disabled(entry.session.workingState != .exited)
+                if entry.session.kind == .folder || entry.session.kind == .temp {
+                    Button("Move to Worktree…") { store.handoverRequestID = entry.session.id }
+                        .disabled(!entry.session.canMoveToWorktree
+                                  || store.handoverProgress[entry.session.id] != nil)
+                }
                 Divider()
                 Button("Close Session") { store.close(entry.session.id) }
             }

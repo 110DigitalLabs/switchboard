@@ -23,6 +23,14 @@ struct ContentView: View {
         .sheet(isPresented: $store.isPickerPresented) {
             NewSessionSheet()
         }
+        .sheet(isPresented: Binding(
+            get: { store.handoverRequestID != nil },
+            set: { if !$0 { store.handoverRequestID = nil } }
+        )) {
+            if let id = store.handoverRequestID {
+                MoveToWorktreeSheet(rowID: id)
+            }
+        }
         .alert("Switchboard", isPresented: Binding(
             get: { store.errorMessage != nil },
             set: { if !$0 { store.errorMessage = nil } }

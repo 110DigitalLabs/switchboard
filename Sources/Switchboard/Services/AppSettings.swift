@@ -11,6 +11,7 @@ final class AppSettings {
         static let tempCleanupDays = "tempCleanupDays"
         static let sessionSort = "sessionSort"
         static let sessionGrouping = "sessionGrouping"
+        static let ticketRepo = "ticketRepoPath"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -36,6 +37,12 @@ final class AppSettings {
         didSet { defaults.set(sessionGrouping.rawValue, forKey: Key.sessionGrouping) }
     }
 
+    /// The search bar's repo dropdown: where ticket sessions start. Nil is
+    /// "None" (a temp planning folder under `<home>/tickets`).
+    var ticketRepoPath: String? {
+        didSet { defaults.set(ticketRepoPath, forKey: Key.ticketRepo) }
+    }
+
     var homeFolder: URL { URL(fileURLWithPath: homeFolderPath, isDirectory: true) }
 
     init(defaults: UserDefaults = .standard) {
@@ -46,6 +53,7 @@ final class AppSettings {
         tempCleanupDays = days > 0 ? days : 30
         sessionSort = defaults.string(forKey: Key.sessionSort).flatMap(SessionSort.init(rawValue:)) ?? .ticket
         sessionGrouping = defaults.string(forKey: Key.sessionGrouping).flatMap(SessionGrouping.init(rawValue:)) ?? .none
+        ticketRepoPath = defaults.string(forKey: Key.ticketRepo)
     }
 
     static func defaultHomeFolder() -> String {

@@ -5,10 +5,15 @@ struct SessionLaunch: Equatable, Sendable {
     var directory: String
     /// Typed at the prompt; nil leaves a bare shell.
     var command: String?
+    /// Typed into the agent once it is up, without pressing Return, so the
+    /// user finishes the prompt.
+    var draft: String?
 
     /// A brand-new row: the agent starts fresh in the row's folder.
-    static func fresh(_ session: Session, hooks: HookInstallation?) -> SessionLaunch {
-        SessionLaunch(directory: session.folderPath, command: session.launchCommand(hooks: hooks))
+    static func fresh(_ session: Session, hooks: HookInstallation?,
+                      options: AgentLaunchOptions = AgentLaunchOptions(), draft: String? = nil) -> SessionLaunch {
+        SessionLaunch(directory: session.folderPath,
+                      command: session.launchCommand(hooks: hooks, options: options), draft: draft)
     }
 
     /// Reopening an existing row after a relaunch or a restarted shell.

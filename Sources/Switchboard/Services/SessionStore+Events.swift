@@ -30,6 +30,10 @@ extension SessionStore {
             session.statusText = text.isEmpty ? nil : text
         }
 
+        let taggedTicket = TicketTagging.ticket(toTag: session, prompt: event.prompt,
+                                                teamKeys: ticketSource?.teamKeys ?? [])
+        if let taggedTicket { session.ticketID = taggedTicket }
+
         let wantsAttention = session.activity.apply(event.kind)
         if wantsAttention {
             if selectedID == session.id && isAppActive() {
@@ -42,6 +46,12 @@ extension SessionStore {
 
         update(session)
 
+        if event.kind == .sessionStarted {
+            terminals.terminal(for: session.id)?.agentDidStart()
+        }
+        if let taggedTicket {
+            loadTicketDetails(taggedTicket, rowID: session.id)
+        }
         if session.agentTitle == nil, let path = event.transcriptPath, session.agent == .claudeCode,
            event.kind == .sessionStarted || event.kind == .turnFinished {
             loadTitle(fromTranscript: path, rowID: session.id, conversationID: session.agentConversationID)

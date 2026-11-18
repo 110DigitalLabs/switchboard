@@ -11,10 +11,14 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
     private let rowID: UUID
     private let extraEnvironment: [String: String]
     private var pendingCommand: String?
+    private var pendingDraft: String?
+    /// Whether the agent's SessionStart hook will say when its input is up.
+    private let agentReportsStart: Bool
 
     init(session: Session, hooks: HookInstallation?) {
         rowID = session.id
         extraEnvironment = hooks?.environment(for: session.agent) ?? [:]
+        agentReportsStart = hooks != nil && session.agent.reportsSessionStartReliably
         view = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         super.init()
         view.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
@@ -30,6 +34,7 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
         let shell = ShellEnvironment.loginShell(from: base)
         let env = ShellEnvironment.variables(base: base, rowID: rowID, extra: extraEnvironment)
         pendingCommand = launch.command
+        pendingDraft = launch.draft
 
         view.setProcessOutputHandler { [weak self] in
             Task { @MainActor in self?.shellProducedOutput() }
@@ -52,6 +57,7 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
     /// shells ignore SIGTERM.
     func terminate() {
         pendingCommand = nil
+        pendingDraft = nil
         guard isRunning, let pid = view.process?.shellPid, pid > 0 else { return }
         kill(pid, SIGHUP)
     }
@@ -69,6 +75,29 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
         guard let command = pendingCommand, isRunning else { return }
         pendingCommand = nil
         view.send(txt: command + "\r")
+        // Agents without reliable hooks never report that they started; for
+        // the rest, a timer could type into a startup dialog instead.
+        guard pendingDraft != nil, !agentReportsStart else { return }
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(8))
+            self?.typeDraft()
+        }
+    }
+
+    /// The agent reported its session start: its input box is up, so the
+    /// draft prompt can be typed. Return is not pressed.
+    func agentDidStart() {
+        guard pendingDraft != nil else { return }
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(600))
+            self?.typeDraft()
+        }
+    }
+
+    private func typeDraft() {
+        guard let draft = pendingDraft, pendingCommand == nil, isRunning else { return }
+        pendingDraft = nil
+        view.send(txt: draft)
     }
 
     // MARK: LocalProcessTerminalViewDelegate
@@ -81,6 +110,7 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
 
     func processTerminated(source: TerminalView, exitCode: Int32?) {
         pendingCommand = nil
+        pendingDraft = nil
         let status = exitCode.map { "exit code \($0)" } ?? "signal"
         view.feed(text: "\r\n[Shell exited (\(status)). Right-click the session to restart it.]\r\n")
         onExit?(exitCode)
@@ -88,6 +118,7 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
 
     func processFailedToStart(source: TerminalView, error: LocalProcessError) {
         pendingCommand = nil
+        pendingDraft = nil
         onExit?(nil)
     }
 }

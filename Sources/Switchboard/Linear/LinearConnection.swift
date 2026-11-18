@@ -6,7 +6,7 @@ import Foundation
 @MainActor
 final class LinearConnection: LinearConnecting {
     static let endpoint = URL(string: "https://mcp.linear.app/mcp")!
-    static let keychainService = "dev.switchboard.linear"
+    nonisolated static let keychainService = "dev.switchboard.linear"
     /// Linear's DCR accepts custom schemes (checked against the live
     /// server), and ASWebAuthenticationSession catches it without the app
     /// registering the scheme or listening on a port.

@@ -6,7 +6,7 @@ import UserNotifications
 /// row badge still shows.
 @MainActor
 final class Notifier {
-    private static let rowIDKey = "rowID"
+    nonisolated private static let rowIDKey = "rowID"
 
     private let center = UNUserNotificationCenter.current()
     private let delegate: Delegate

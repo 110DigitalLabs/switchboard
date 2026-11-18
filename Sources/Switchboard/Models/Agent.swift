@@ -41,14 +41,53 @@ enum Agent: String, Codable, CaseIterable, Identifiable, Sendable {
 
     var supportsWorktree: Bool { worktreeFlag != nil }
 
+    /// Claude's and Gemini's SessionStart hooks always run; Codex runs its
+    /// hooks only once trusted, and Cursor's agent gets none.
+    var reportsSessionStartReliably: Bool { self == .claudeCode || self == .geminiCLI }
+
     /// The command line typed into the session's shell to start the agent,
-    /// with Switchboard's hooks loaded when they are installed.
-    func launchCommand(for kind: SessionKind, hooks: HookInstallation? = nil) -> String {
+    /// with Switchboard's hooks loaded when they are installed. An initial
+    /// prompt is submitted by the agent as its first message.
+    func launchCommand(for kind: SessionKind, hooks: HookInstallation? = nil,
+                       options: AgentLaunchOptions = AgentLaunchOptions()) -> String {
         var words = [executable]
         words += hooks?.launchArguments(for: self) ?? []
+        if let prompt = options.prompt, !prompt.isEmpty {
+            // Before the worktree flag: Claude's `-w [name]` would take a
+            // following word as the worktree's name.
+            words += promptArguments(ShellQuote.quote(prompt))
+        }
+        if options.planMode, let plan = planModeArguments {
+            words += plan
+        }
         if kind == .worktree, let flag = worktreeFlag {
             words.append(flag)
         }
         return words.joined(separator: " ")
     }
+
+    /// The agent's own read-only planning mode, where it has one.
+    var planModeArguments: [String]? {
+        switch self {
+        case .claudeCode: ["--permission-mode", "plan"]
+        case .codex, .geminiCLI, .cursorAgent: nil
+        }
+    }
+
+    /// How each CLI takes a first prompt and stays interactive: a positional
+    /// argument, except Gemini, where a positional prompt runs headless.
+    private func promptArguments(_ quoted: String) -> [String] {
+        switch self {
+        case .geminiCLI: ["-i", quoted]
+        case .claudeCode, .codex, .cursorAgent: [quoted]
+        }
+    }
+}
+
+/// Extras for a fresh agent launch.
+struct AgentLaunchOptions: Equatable, Sendable {
+    /// Start in the agent's planning mode (Claude only).
+    var planMode = false
+    /// Submitted as the agent's first message.
+    var prompt: String?
 }

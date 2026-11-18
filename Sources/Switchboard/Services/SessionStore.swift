@@ -21,6 +21,11 @@ final class SessionStore {
     var isPickerPresented = false
     var errorMessage: String?
 
+    /// Row ID → progress text while "Move to worktree" runs (live only).
+    var handoverProgress: [UUID: String] = [:]
+    /// The row whose "Move to worktree…" sheet is open.
+    var handoverRequestID: UUID?
+
     private(set) var repos: [Repo] = []
     private(set) var isScanningRepos = false
 
@@ -32,6 +37,13 @@ final class SessionStore {
     @ObservationIgnored let file: SessionFile?
     @ObservationIgnored var saveTask: Task<Void, Never>?
     @ObservationIgnored var lastSaved: Data?
+    /// Linear, for tagging sessions with tickets mentioned in prompts.
+    @ObservationIgnored weak var ticketSource: TicketSource?
+    /// Runs a summary shell line in a directory; injectable for tests.
+    @ObservationIgnored var runSummary: (_ line: String, _ directory: String) async throws -> String = {
+        try await SummaryProcess.run(line: $0, directory: $1)
+    }
+    @ObservationIgnored var handoverDirectory = HandoverCommand.defaultDirectory()
 
     init(settings: AppSettings, hooks: HookInstallation? = nil, file: SessionFile? = nil) {
         self.settings = settings
@@ -71,10 +83,11 @@ final class SessionStore {
     }
 
     /// Visible for tests; normal creation goes through `create`.
-    func add(_ session: Session, startTerminal: Bool = true) {
+    func add(_ session: Session, startTerminal: Bool = true,
+             options: AgentLaunchOptions = AgentLaunchOptions(), draft: String? = nil) {
         sessions.append(session)
         guard startTerminal else { return }
-        openTerminal(for: session, launch: .fresh(session, hooks: terminals.hooks))
+        openTerminal(for: session, launch: .fresh(session, hooks: terminals.hooks, options: options, draft: draft))
         selectedID = session.id
     }
 

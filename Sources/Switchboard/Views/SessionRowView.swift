@@ -4,12 +4,14 @@ struct SessionRowView: View {
     let session: Session
     /// The ticket with its -A/-B suffix when several sessions share it.
     var ticketLabel: String?
+    /// "Move to worktree" progress, while it runs.
+    var handoverProgress: String?
 
     private var title: String { session.agentTitle ?? ticketLabel ?? session.title }
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: iconName)
+            Image(systemName: session.kind.iconName)
                 .foregroundStyle(.secondary)
                 .frame(width: 18)
             VStack(alignment: .leading, spacing: 2) {
@@ -20,7 +22,20 @@ struct SessionRowView: View {
                         Text(ticketLabel)
                             .font(.caption2.monospaced())
                             .foregroundStyle(.secondary)
+                    } else if let ticketTitle = session.ticketTitle, session.agentTitle == nil {
+                        Text(ticketTitle)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
+                }
+                if let handoverProgress {
+                    HStack(spacing: 4) {
+                        ProgressView().controlSize(.mini)
+                        Text(handoverProgress)
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 }
                 Text(subtitle)
                     .font(.caption)
@@ -45,15 +60,6 @@ struct SessionRowView: View {
             StateIndicator(state: session.workingState)
         }
         .padding(.vertical, 2)
-    }
-
-    private var iconName: String {
-        switch session.kind {
-        case .worktree: "arrow.triangle.branch"
-        case .folder: "folder"
-        case .scratch: "note.text"
-        case .temp: "clock"
-        }
     }
 
     private var subtitle: String {
@@ -93,6 +99,17 @@ private struct StateIndicator: View {
         case .needsInput: .orange
         case .finished: .green
         case .exited: .clear
+        }
+    }
+}
+
+extension SessionKind {
+    var iconName: String {
+        switch self {
+        case .worktree: "arrow.triangle.branch"
+        case .folder: "folder"
+        case .scratch: "note.text"
+        case .temp: "clock"
         }
     }
 }

@@ -27,9 +27,11 @@ struct AgentEvent: Equatable, Sendable {
     var transcriptPath: String?
     /// The agent's working directory (a worktree, for worktree sessions).
     var cwd: String?
+    /// The user's prompt text, on prompt-submitted events.
+    var prompt: String?
 
     init(rowID: UUID, kind: Kind, conversationID: String? = nil, model: String? = nil,
-         title: String? = nil, transcriptPath: String? = nil, cwd: String? = nil) {
+         title: String? = nil, transcriptPath: String? = nil, cwd: String? = nil, prompt: String? = nil) {
         self.rowID = rowID
         self.kind = kind
         self.conversationID = conversationID
@@ -37,6 +39,7 @@ struct AgentEvent: Equatable, Sendable {
         self.title = title
         self.transcriptPath = transcriptPath
         self.cwd = cwd
+        self.prompt = prompt
     }
 }
 
@@ -62,7 +65,10 @@ enum AgentEventDecoder {
             model: model(in: json),
             title: string(json, "session_name"),
             transcriptPath: string(json, "transcript_path"),
-            cwd: string(json, "cwd")
+            cwd: string(json, "cwd"),
+            // Claude's and Codex's UserPromptSubmit and Gemini's BeforeAgent
+            // all carry the text as `prompt`.
+            prompt: kind == .promptSubmitted ? string(json, "prompt") : nil
         )
     }
 

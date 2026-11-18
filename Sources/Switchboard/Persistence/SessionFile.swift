@@ -4,10 +4,10 @@ import Foundation
 struct SessionFile: Sendable {
     let url: URL
 
-    static func standard() throws -> SessionFile {
+    static func standard(name: String = "sessions.json") throws -> SessionFile {
         let support = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
                                                   appropriateFor: nil, create: true)
-        return SessionFile(url: support.appendingPathComponent("Switchboard/sessions.json"))
+        return SessionFile(url: support.appendingPathComponent("Switchboard/\(name)"))
     }
 
     /// The saved state. A missing file is an empty state; a file that cannot

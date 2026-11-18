@@ -12,7 +12,9 @@ struct SwitchboardApp: App {
         let settings = AppSettings()
         let hookServices = HookServices()
         // Unit tests run inside the app and must not touch the saved rows.
-        let file = HookServices.isRunningTests ? nil : try? SessionFile.standard()
+        let fakeLinear = DebugLinear.isEnabled && !HookServices.isRunningTests
+        let file = HookServices.isRunningTests
+            ? nil : try? SessionFile.standard(name: fakeLinear ? "sessions-fake-linear.json" : "sessions.json")
         let store = SessionStore(settings: settings, hooks: hookServices.installation, file: file)
         hookServices.connect(to: store)
         store.restore()
@@ -21,10 +23,16 @@ struct SwitchboardApp: App {
             MainActor.assumeIsolated { store?.saveNow() }
         }
         // Tests must not read the real Keychain or reach Linear.
-        let linear = LinearAccount(connector: HookServices.isRunningTests
-                                       ? FakeLinearConnector() as LinearConnecting
-                                       : LinearConnection(),
-                                   monitorNetwork: !HookServices.isRunningTests)
+        let connector: LinearConnecting = if fakeLinear {
+            FakeLinearConnector(service: FakeLinearService.seeded(), signedIn: true)
+        } else if HookServices.isRunningTests {
+            FakeLinearConnector()
+        } else {
+            LinearConnection()
+        }
+        let linear = LinearAccount(connector: connector,
+                                   monitorNetwork: !HookServices.isRunningTests && !fakeLinear)
+        store.ticketSource = linear
         Task { await linear.start() }
         let navigator = KeyboardNavigator(store: store)
         navigator.install()
