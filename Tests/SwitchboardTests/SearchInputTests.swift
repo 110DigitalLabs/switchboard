@@ -11,7 +11,7 @@ struct SearchInputTests {
         #expect(SearchInput.classify("https://linear.app/acme/issue/ENG-12/some-title") == .ticket("ENG-12"))
         #expect(SearchInput.classify("linear.app/acme/issue/OPS-3") == .ticket("OPS-3"))
         let pr = SearchInput.classify("https://github.com/acme/api/pull/42")
-        #expect(pr == .pullRequest(URL(string: "https://github.com/acme/api/pull/42")!))
+        #expect(pr == .pullRequest(PullRequestReference(repo: GitHubRepoRef(owner: "acme", name: "api"), number: 42)))
         #expect(SearchInput.classify("login bug") == .text("login bug"))
         #expect(SearchInput.classify("ENG") == .text("ENG"))
     }
@@ -31,8 +31,8 @@ struct SearchInputTests {
 
     @Test func textAndPullRequestsNeverStartSessions() {
         #expect(SearchAction.forInput(.text("crash"), sessions: [], repo: repo) == .searchText("crash"))
-        #expect(SearchAction.forInput(.pullRequest(URL(string: "https://github.com/a/b/pull/1")!),
-                                      sessions: [], repo: nil) == .pullRequestUnsupported)
+        let ref = PullRequestReference(repo: GitHubRepoRef(owner: "a", name: "b"), number: 1)
+        #expect(SearchAction.forInput(.pullRequest(ref), sessions: [], repo: nil) == .startReview(ref))
         #expect(SearchAction.forInput(.empty, sessions: [], repo: nil) == SearchAction.none)
     }
 }

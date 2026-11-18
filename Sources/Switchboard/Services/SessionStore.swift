@@ -44,6 +44,8 @@ final class SessionStore {
         try await SummaryProcess.run(line: $0, directory: $1)
     }
     @ObservationIgnored var handoverDirectory = HandoverCommand.defaultDirectory()
+    /// Called when a row gains a PR or a worktree to look PRs up for.
+    @ObservationIgnored var onPullRequestSourcesChanged: (() -> Void)?
 
     init(settings: AppSettings, hooks: HookInstallation? = nil, file: SessionFile? = nil) {
         self.settings = settings
@@ -77,6 +79,21 @@ final class SessionStore {
                 session = Session(kind: .scratch, folderPath: folder.path, agent: agent)
             }
             add(session)
+        } catch {
+            errorMessage = "Could not create the session folder: \(error.localizedDescription)"
+        }
+    }
+
+    /// A scratch row whose shell runs `command` instead of an agent, e.g.
+    /// `gh auth login --web`. The agent can be started there afterwards.
+    func startCommandSession(_ command: String, title: String, agent: Agent) {
+        do {
+            let folder = try ScratchFolder.create(in: settings.homeFolder)
+            var session = Session(kind: .scratch, folderPath: folder.path, agent: agent)
+            session.agentTitle = title
+            sessions.append(session)
+            openTerminal(for: session, launch: SessionLaunch(directory: folder.path, command: command))
+            selectedID = session.id
         } catch {
             errorMessage = "Could not create the session folder: \(error.localizedDescription)"
         }

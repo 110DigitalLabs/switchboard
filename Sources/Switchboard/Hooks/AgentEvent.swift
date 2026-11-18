@@ -29,9 +29,12 @@ struct AgentEvent: Equatable, Sendable {
     var cwd: String?
     /// The user's prompt text, on prompt-submitted events.
     var prompt: String?
+    /// GitHub PR URLs in a finished tool call's input or output.
+    var prURLs: [String]
 
     init(rowID: UUID, kind: Kind, conversationID: String? = nil, model: String? = nil,
-         title: String? = nil, transcriptPath: String? = nil, cwd: String? = nil, prompt: String? = nil) {
+         title: String? = nil, transcriptPath: String? = nil, cwd: String? = nil, prompt: String? = nil,
+         prURLs: [String] = []) {
         self.rowID = rowID
         self.kind = kind
         self.conversationID = conversationID
@@ -40,6 +43,7 @@ struct AgentEvent: Equatable, Sendable {
         self.transcriptPath = transcriptPath
         self.cwd = cwd
         self.prompt = prompt
+        self.prURLs = prURLs
     }
 }
 
@@ -68,7 +72,8 @@ enum AgentEventDecoder {
             cwd: string(json, "cwd"),
             // Claude's and Codex's UserPromptSubmit and Gemini's BeforeAgent
             // all carry the text as `prompt`.
-            prompt: kind == .promptSubmitted ? string(json, "prompt") : nil
+            prompt: kind == .promptSubmitted ? string(json, "prompt") : nil,
+            prURLs: HookPullRequests.urls(event: message.event, json: json)
         )
     }
 

@@ -4,6 +4,7 @@ extension SessionStore {
     /// Applies a hook event to its row. Events for unknown rows are ignored.
     func handle(_ event: AgentEvent) {
         guard var session = sessions.first(where: { $0.id == event.rowID }) else { return }
+        let previousDirectory = session.workingDirectory
 
         if let id = event.conversationID, id != session.agentConversationID {
             switch event.kind {
@@ -45,6 +46,12 @@ extension SessionStore {
         }
 
         update(session)
+        if !event.prURLs.isEmpty {
+            attachPullRequests(event.prURLs, to: session.id)
+        }
+        if session.kind == .worktree, session.workingDirectory != previousDirectory {
+            onPullRequestSourcesChanged?()
+        }
 
         if event.kind == .sessionStarted {
             terminals.terminal(for: session.id)?.agentDidStart()

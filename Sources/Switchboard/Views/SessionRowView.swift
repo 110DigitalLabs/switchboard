@@ -11,7 +11,7 @@ struct SessionRowView: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: session.kind.iconName)
+            Image(systemName: session.iconName)
                 .foregroundStyle(.secondary)
                 .frame(width: 18)
             VStack(alignment: .leading, spacing: 2) {
@@ -51,6 +51,7 @@ struct SessionRowView: View {
                 }
             }
             Spacer(minLength: 4)
+            PRIconsView(urls: session.prURLs)
             if session.hasBadge {
                 Circle()
                     .fill(.red)
@@ -101,6 +102,11 @@ private struct StateIndicator: View {
         case .exited: .clear
         }
     }
+}
+
+extension Session {
+    /// The kind's icon; PR reviews in their own folder get an eye.
+    var iconName: String { ReviewSessions.isReviewFolder(self) ? "eye" : kind.iconName }
 }
 
 extension SessionKind {

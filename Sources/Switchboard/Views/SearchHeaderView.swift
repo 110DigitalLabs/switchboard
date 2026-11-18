@@ -10,10 +10,10 @@ struct SearchHeaderView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                TextField("Ticket ID, Linear URL or search", text: $search.query)
+                TextField(linear.isConnected ? "Ticket ID, Linear or PR URL, or search" : "GitHub PR URL",
+                          text: $search.query)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit(onSubmit)
-                    .disabled(!linear.isConnected)
                     .onExitCommand { search.clear() }
                 RepoDropdown()
                 Button {

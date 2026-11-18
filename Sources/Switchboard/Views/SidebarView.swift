@@ -4,10 +4,11 @@ struct SidebarView: View {
     @Environment(SessionStore.self) private var store
     @Environment(AppSettings.self) private var settings
     @Environment(LinearAccount.self) private var linear
+    @Environment(GitHubAccount.self) private var github
     @State private var search = TicketSearchModel()
 
     var body: some View {
-        let actions = TicketActions(store: store, settings: settings, linear: linear)
+        let actions = TicketActions(store: store, settings: settings, linear: linear, github: github)
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
                 SearchHeaderView(search: search) {

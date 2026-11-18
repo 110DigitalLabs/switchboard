@@ -3,7 +3,7 @@ import Foundation
 /// Finds git repos at most two levels below the home folder.
 enum RepoScanner {
     /// Top-level folders Switchboard owns or that never hold user repos.
-    static let skippedTopLevel: Set<String> = ["node_modules", "scratch", "tickets"]
+    static let skippedTopLevel: Set<String> = ["node_modules", "scratch", "tickets", "reviews"]
     static let skippedNested: Set<String> = ["node_modules"]
 
     /// `.git` is a directory in a normal clone and a file in a worktree.

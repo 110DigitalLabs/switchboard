@@ -5,7 +5,13 @@ struct TerminalPane: View {
 
     var body: some View {
         if let terminal = store.selectedTerminal {
-            TerminalHostView(terminal: terminal)
+            VStack(spacing: 0) {
+                TerminalHostView(terminal: terminal)
+                if let session = store.sessions.first(where: { $0.id == store.selectedID }) {
+                    Divider()
+                    SessionStatusBar(session: session)
+                }
+            }
         } else {
             ContentUnavailableView {
                 Label("No Session Selected", systemImage: "terminal")

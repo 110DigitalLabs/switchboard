@@ -3,6 +3,7 @@ import SwiftUI
 /// Results under the search box while it has text.
 struct SearchResultsView: View {
     @Environment(SessionStore.self) private var store
+    @Environment(LinearAccount.self) private var linear
     let search: TicketSearchModel
     let actions: TicketActions
 
@@ -11,16 +12,19 @@ struct SearchResultsView: View {
             switch search.input {
             case .empty:
                 EmptyView()
-            case .pullRequest:
-                Label("PR sessions coming soon", systemImage: "arrow.triangle.pull")
-                    .foregroundStyle(.secondary)
+            case .pullRequest(let ref):
+                PullRequestSearchRow(ref: ref, actions: actions)
             case .ticket(let id):
-                ticketResults(id)
+                if linear.isConnected { ticketResults(id) } else { signedOutNote }
             case .text:
-                textResults
+                if linear.isConnected { textResults } else { signedOutNote }
             }
         }
         .font(.callout)
+    }
+
+    private var signedOutNote: some View {
+        Text("Ticket search needs Linear.").foregroundStyle(.secondary)
     }
 
     @ViewBuilder
@@ -82,7 +86,7 @@ private struct ExistingSessionRow: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: session.kind.iconName)
+            Image(systemName: session.iconName)
                 .foregroundStyle(.secondary)
             Button(session.agentTitle.map { "\(label) · \($0)" } ?? label) {
                 store.selectedID = session.id

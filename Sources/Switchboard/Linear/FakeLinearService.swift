@@ -9,6 +9,7 @@ actor FakeLinearService: LinearService {
     /// Thrown by the next call, then cleared.
     var nextError: LinearError?
     private(set) var assignedFetches = 0
+    private(set) var stateFetches = 0
 
     init(user: LinearUser = LinearUser(id: "u1", name: "Ada Lovelace", email: "ada@example.com"),
          issues: [LinearIssue] = [], teams: [LinearTeam] = [], states: [String: [LinearWorkflowState]] = [:]) {
@@ -58,6 +59,7 @@ actor FakeLinearService: LinearService {
     }
 
     func workflowStates(teamID: String) async throws -> [LinearWorkflowState] {
+        stateFetches += 1
         try checkError()
         return states[teamID] ?? []
     }

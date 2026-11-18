@@ -5,8 +5,8 @@ enum SearchInput: Equatable, Sendable {
     case empty
     /// A Linear issue ID or URL, as the normalised identifier.
     case ticket(String)
-    /// A GitHub PR URL (stage 5).
-    case pullRequest(URL)
+    /// A GitHub PR URL.
+    case pullRequest(PullRequestReference)
     /// Anything else: a Linear text search.
     case text(String)
 
@@ -15,7 +15,8 @@ enum SearchInput: Equatable, Sendable {
         guard !text.isEmpty else { return .empty }
         switch TicketReference.parse(text) {
         case .linearID(let id), .linearURL(let id, _): return .ticket(id)
-        case .githubPullRequest(_, _, _, let url): return .pullRequest(url)
+        case .githubPullRequest(let owner, let repo, let number, _):
+            return .pullRequest(PullRequestReference(repo: GitHubRepoRef(owner: owner, name: repo), number: number))
         case nil: return .text(text)
         }
     }
@@ -39,8 +40,8 @@ enum SearchAction: Equatable, Sendable {
     case selectSession(UUID)
     case startTicket(String, TicketDestination)
     case searchText(String)
-    /// Shown, but disabled until stage 5.
-    case pullRequestUnsupported
+    /// A review session on the PR, with no checkout.
+    case startReview(PullRequestReference)
 
     static func forInput(_ input: SearchInput, sessions: [Session], repo: Repo?) -> SearchAction {
         switch input {
@@ -50,7 +51,7 @@ enum SearchAction: Equatable, Sendable {
                 return .selectSession(first.id)
             }
             return .startTicket(id, TicketDestination(repo: repo))
-        case .pullRequest: return .pullRequestUnsupported
+        case .pullRequest(let ref): return .startReview(ref)
         case .text(let query): return .searchText(query)
         }
     }

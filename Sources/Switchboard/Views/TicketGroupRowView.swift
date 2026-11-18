@@ -14,16 +14,7 @@ struct TicketGroupRowView: View {
                 .font(.caption2)
                 .foregroundStyle(.secondary)
             Spacer(minLength: 4)
-            ForEach(group.prURLs, id: \.self) { url in
-                if let link = URL(string: url) {
-                    Link(destination: link) {
-                        Image(systemName: "link")
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                    .help(url)
-                }
-            }
+            PRIconsView(urls: group.prURLs)
         }
     }
 }

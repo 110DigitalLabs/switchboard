@@ -23,47 +23,21 @@ enum SummaryProcess {
 
     private static func runBlocking(shell: String, line: String, directory: String,
                                     timeout: Duration) throws -> String {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: shell)
-        process.arguments = ["-l", "-i", "-c", "printf '\\n%s\\n' '\(marker)'; \(line)"]
-        process.currentDirectoryURL = URL(fileURLWithPath: directory, isDirectory: true)
-        var environment = ProcessInfo.processInfo.environment
-        environment.removeValue(forKey: ShellEnvironment.rowIDKey)
-        process.environment = environment
-        let output = Pipe()
-        let errors = Pipe()
-        process.standardOutput = output
-        process.standardError = errors
-        process.standardInput = FileHandle.nullDevice
-
-        try process.run()
-        let timedOut = TimeoutFlag()
-        let killer = DispatchWorkItem { [process] in
-            guard process.isRunning else { return }
-            timedOut.set()
-            process.terminate()
+        let output: ProcessRunner.Output
+        do {
+            output = try ProcessRunner.runBlocking(
+                shell, ["-l", "-i", "-c", "printf '\\n%s\\n' '\(marker)'; \(line)"],
+                directory: directory, environment: nil, timeout: timeout)
+        } catch ProcessRunner.Failure.timedOut {
+            throw Failure(message: "The summary timed out.")
+        } catch ProcessRunner.Failure.couldNotLaunch(let message) {
+            throw Failure(message: message)
         }
-        let seconds = Double(timeout.components.seconds) + Double(timeout.components.attoseconds) / 1e18
-        DispatchQueue.global().asyncAfter(deadline: .now() + seconds, execute: killer)
-
-        // Drain stderr concurrently so a chatty agent cannot fill the pipe.
-        let errorData = ErrorBuffer()
-        let errorRead = DispatchGroup()
-        DispatchQueue.global().async(group: errorRead) {
-            errorData.set(errors.fileHandleForReading.readDataToEndOfFile())
-        }
-        let data = output.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-        killer.cancel()
-        errorRead.wait()
-
-        if timedOut.isSet { throw Failure(message: "The summary timed out.") }
-        let text = afterMarker(String(decoding: data, as: UTF8.self))
-        guard process.terminationStatus == 0, !text.isEmpty else {
-            let detail = String(decoding: errorData.get(), as: UTF8.self)
-                .trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = afterMarker(output.stdoutText)
+        guard output.status == 0, !text.isEmpty else {
+            let detail = output.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
             throw Failure(message: detail.isEmpty
-                          ? "The agent exited with status \(process.terminationStatus)."
+                          ? "The agent exited with status \(output.status)."
                           : String(detail.suffix(300)))
         }
         return text
@@ -73,18 +47,4 @@ enum SummaryProcess {
         let tail = output.range(of: marker).map { String(output[$0.upperBound...]) } ?? output
         return tail.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-}
-
-private final class TimeoutFlag: @unchecked Sendable {
-    private let lock = NSLock()
-    private var value = false
-    func set() { lock.withLock { value = true } }
-    var isSet: Bool { lock.withLock { value } }
-}
-
-private final class ErrorBuffer: @unchecked Sendable {
-    private let lock = NSLock()
-    private var data = Data()
-    func set(_ new: Data) { lock.withLock { data = new } }
-    func get() -> Data { lock.withLock { data } }
 }

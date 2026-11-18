@@ -5,6 +5,8 @@ struct SwitchboardApp: App {
     @State private var settings: AppSettings
     @State private var store: SessionStore
     @State private var linear: LinearAccount
+    @State private var github: GitHubAccount
+    @State private var ticketStatus = TicketStatusModel()
     private let hookServices: HookServices
     private let navigator: KeyboardNavigator
 
@@ -34,6 +36,11 @@ struct SwitchboardApp: App {
                                    monitorNetwork: !HookServices.isRunningTests && !fakeLinear)
         store.ticketSource = linear
         Task { await linear.start() }
+        let github = GitHubAccount(service: GHCLIService())
+        github.store = store
+        store.onPullRequestSourcesChanged = { [weak github] in github?.requestRefresh() }
+        // Tests must not run gh.
+        if !HookServices.isRunningTests { github.start() }
         let navigator = KeyboardNavigator(store: store)
         navigator.install()
         self.navigator = navigator
@@ -41,6 +48,7 @@ struct SwitchboardApp: App {
         _settings = State(initialValue: settings)
         _store = State(initialValue: store)
         _linear = State(initialValue: linear)
+        _github = State(initialValue: github)
     }
 
     var body: some Scene {
@@ -49,6 +57,8 @@ struct SwitchboardApp: App {
                 .environment(store)
                 .environment(settings)
                 .environment(linear)
+                .environment(github)
+                .environment(ticketStatus)
                 .background(WindowZoomer { [navigator] in navigator.window = $0 })
         }
         .commands { SessionCommands(store: store) }
@@ -57,6 +67,8 @@ struct SwitchboardApp: App {
             SettingsView()
                 .environment(settings)
                 .environment(linear)
+                .environment(github)
+                .environment(store)
         }
     }
 }

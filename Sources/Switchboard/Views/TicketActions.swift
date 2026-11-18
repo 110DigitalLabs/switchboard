@@ -6,6 +6,7 @@ struct TicketActions {
     let store: SessionStore
     let settings: AppSettings
     let linear: LinearAccount
+    let github: GitHubAccount
 
     var destination: TicketDestination { TicketDestination(repo: settings.ticketRepo) }
 
@@ -29,6 +30,19 @@ struct TicketActions {
         }
     }
 
+    /// A review session on the PR: in a local clone of its repo when one
+    /// is discovered (plain, no worktree), else in `<home>/reviews/…`.
+    func startReview(_ ref: PullRequestReference, pullRequest: PullRequest?) async {
+        if store.repos.isEmpty { await store.refreshRepos() }
+        var pullRequest = pullRequest
+        if pullRequest == nil, github.isAvailable {
+            pullRequest = try? await github.service.pullRequest(ref)
+        }
+        let folder = ReviewSessions.folder(for: ref, repos: store.repos, origins: await store.repoOrigins(),
+                                           home: settings.homeFolder)
+        store.startReviewSession(ref, pullRequest: pullRequest, folder: folder, agent: settings.defaultAgent)
+    }
+
     /// Return in the search box. Returns true when the search was used up.
     func submit(_ search: TicketSearchModel) async -> Bool {
         switch SearchAction.forInput(search.input, sessions: store.sessions, repo: settings.ticketRepo) {
@@ -49,7 +63,10 @@ struct TicketActions {
             guard let issue else { return false }
             start(issue)
             return true
-        case .searchText, .pullRequestUnsupported, .none:
+        case .startReview(let ref):
+            await startReview(ref, pullRequest: nil)
+            return true
+        case .searchText, .none:
             return false
         }
     }

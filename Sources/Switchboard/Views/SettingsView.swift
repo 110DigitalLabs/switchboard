@@ -27,10 +27,7 @@ struct SettingsView: View {
 
             Section("Accounts") {
                 LinearAccountRow()
-                LabeledContent("GitHub") {
-                    Text("Coming later").foregroundStyle(.secondary)
-                }
-                .disabled(true)
+                GitHubAccountRow()
             }
         }
         .formStyle(.grouped)
