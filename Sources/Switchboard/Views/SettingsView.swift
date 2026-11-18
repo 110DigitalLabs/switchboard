@@ -2,6 +2,17 @@ import AppKit
 import SwiftUI
 
 struct SettingsView: View {
+    var body: some View {
+        TabView {
+            GeneralSettingsView()
+                .tabItem { Label("General", systemImage: "gearshape") }
+            TerminalSettingsView()
+                .tabItem { Label("Terminal", systemImage: "terminal") }
+        }
+    }
+}
+
+private struct GeneralSettingsView: View {
     @Environment(AppSettings.self) private var settings
 
     var body: some View {

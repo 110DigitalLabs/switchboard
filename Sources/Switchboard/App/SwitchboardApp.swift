@@ -64,6 +64,8 @@ struct SwitchboardApp: App {
                 .background(WindowZoomer(sidebarFraction: settings.sidebarWidth.fraction) { [navigator] in
                     navigator.window = $0
                 })
+                .onChange(of: settings.terminalAppearance) { store.applyTerminalAppearance() }
+                .onChange(of: settings.importedThemes) { store.applyTerminalAppearance() }
                 .onChange(of: settings.sidebarWidth) { _, width in
                     if let window = navigator.window {
                         WindowZoomer.placeDivider(in: window, fraction: width.fraction)

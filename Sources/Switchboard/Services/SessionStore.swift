@@ -61,6 +61,11 @@ final class SessionStore {
         self.settings = settings
         self.file = file
         terminals = TerminalRegistry(hooks: hooks)
+        applyTerminalAppearance()
+    }
+
+    func applyTerminalAppearance() {
+        terminals.apply(settings.terminalAppearance, theme: settings.terminalTheme)
     }
 
     var layout: SessionListLayout {

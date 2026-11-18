@@ -13,6 +13,8 @@ final class AppSettings {
         static let sessionGrouping = "sessionGrouping"
         static let ticketRepo = "ticketRepoPath"
         static let sidebarWidth = "sidebarWidth"
+        static let terminalAppearance = "terminalAppearance"
+        static let importedThemes = "importedTerminalThemes"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -48,6 +50,34 @@ final class AppSettings {
         didSet { defaults.set(sidebarWidth.rawValue, forKey: Key.sidebarWidth) }
     }
 
+    var terminalAppearance: TerminalAppearance {
+        didSet { save(terminalAppearance, forKey: Key.terminalAppearance) }
+    }
+
+    /// Themes added from `.itermcolors` files or the iTerm2 profile.
+    var importedThemes: [TerminalTheme] {
+        didSet { save(importedThemes, forKey: Key.importedThemes) }
+    }
+
+    var terminalThemes: [TerminalTheme] { TerminalTheme.builtIn + importedThemes }
+
+    /// The chosen theme; System when it has been removed.
+    var terminalTheme: TerminalTheme {
+        terminalThemes.first { $0.id == terminalAppearance.themeID } ?? .system
+    }
+
+    /// Adds or replaces (by ID) an imported theme and selects it.
+    func importTheme(_ theme: TerminalTheme) {
+        importedThemes.removeAll { $0.id == theme.id }
+        importedThemes.append(theme)
+        terminalAppearance.themeID = theme.id
+    }
+
+    func removeImportedTheme(_ id: String) {
+        importedThemes.removeAll { $0.id == id }
+        if terminalAppearance.themeID == id { terminalAppearance.themeID = TerminalTheme.systemID }
+    }
+
     var homeFolder: URL { URL(fileURLWithPath: homeFolderPath, isDirectory: true) }
 
     init(defaults: UserDefaults = .standard) {
@@ -60,6 +90,17 @@ final class AppSettings {
         sessionGrouping = defaults.string(forKey: Key.sessionGrouping).flatMap(SessionGrouping.init(rawValue:)) ?? .none
         ticketRepoPath = defaults.string(forKey: Key.ticketRepo)
         sidebarWidth = defaults.string(forKey: Key.sidebarWidth).flatMap(SidebarWidth.init(rawValue:)) ?? .third
+        terminalAppearance = Self.load(TerminalAppearance.self, from: defaults, key: Key.terminalAppearance)
+            ?? TerminalAppearance()
+        importedThemes = Self.load([TerminalTheme].self, from: defaults, key: Key.importedThemes) ?? []
+    }
+
+    private func save(_ value: some Encodable, forKey key: String) {
+        defaults.set(try? JSONEncoder().encode(value), forKey: key)
+    }
+
+    private static func load<T: Decodable>(_ type: T.Type, from defaults: UserDefaults, key: String) -> T? {
+        defaults.data(forKey: key).flatMap { try? JSONDecoder().decode(type, from: $0) }
     }
 
     static func defaultHomeFolder() -> String {
