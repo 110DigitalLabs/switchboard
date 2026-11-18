@@ -4,11 +4,13 @@ import SwiftUI
 /// section.
 struct ElsewhereRowView: View {
     let conversation: PastConversation
+    @Environment(\.sessionListFonts) private var fonts
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 6) {
                 Text(conversation.displayTitle)
+                    .font(fonts.title)
                     .lineLimit(1)
                     .truncationMode(.tail)
                 if conversation.isRecentlyActive() {
@@ -27,7 +29,7 @@ struct ElsewhereRowView: View {
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
-            .font(.caption)
+            .font(fonts.detail)
             .foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)

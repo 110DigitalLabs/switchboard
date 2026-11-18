@@ -42,6 +42,12 @@ struct SessionListLayout: Equatable {
 
     var sections: [Section]
 
+    /// The ⌘1–⌘9 number for each session that has one: its 1-based position
+    /// in `visibleOrder`, the same order `selectVisible(position:)` uses.
+    var shortcutNumbers: [UUID: Int] {
+        Dictionary(uniqueKeysWithValues: visibleOrder.prefix(9).enumerated().map { ($1, $0 + 1) })
+    }
+
     /// Session IDs in on-screen order, skipping collapsed sections,
     /// collapsed ticket groups and kept (closed) rows, which have no terminal.
     var visibleOrder: [UUID] {

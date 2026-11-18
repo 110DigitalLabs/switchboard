@@ -2,22 +2,25 @@ import SwiftUI
 
 struct SessionListView: View {
     @Environment(SessionStore.self) private var store
+    @Environment(AppSettings.self) private var settings
     @State private var resumeRequest: PastConversation?
 
     static let elsewhereSectionID = "elsewhere"
 
     var body: some View {
         @Bindable var store = store
+        let layout = store.layout
+        let shortcuts = layout.shortcutNumbers
         List(selection: $store.selectedID) {
-            ForEach(store.layout.sections) { section in
+            ForEach(layout.sections) { section in
                 Section(isExpanded: expansion(section.id)) {
                     ForEach(section.items) { item in
                         switch item {
                         case .session(let entry):
-                            row(entry)
+                            row(entry, shortcuts)
                         case .ticket(let group):
                             DisclosureGroup(isExpanded: expansion(group.id)) {
-                                ForEach(group.entries) { row($0) }
+                                ForEach(group.entries) { row($0, shortcuts) }
                             } label: {
                                 TicketGroupRowView(group: group)
                             }
@@ -44,6 +47,7 @@ struct SessionListView: View {
             }
         }
         .listStyle(.sidebar)
+        .environment(\.sessionListFonts, SessionListFonts(settings.sessionListTextSize))
         .modifier(CloseFolderDialog())
         .confirmationDialog("Resume “\(resumeRequest?.displayTitle ?? "")” here?",
                             isPresented: Binding(get: { resumeRequest != nil },
@@ -70,7 +74,7 @@ struct SessionListView: View {
     }
 
     @ViewBuilder
-    private func row(_ entry: SessionListLayout.Entry) -> some View {
+    private func row(_ entry: SessionListLayout.Entry, _ shortcuts: [UUID: Int]) -> some View {
         let session = entry.session
         if let closedAt = session.closedAt {
             SessionRowView(session: session, ticketLabel: entry.ticketLabel,
@@ -84,7 +88,8 @@ struct SessionListView: View {
                 }
         } else {
             SessionRowView(session: session, ticketLabel: entry.ticketLabel,
-                           handoverProgress: store.handoverProgress[session.id])
+                           handoverProgress: store.handoverProgress[session.id],
+                           shortcutNumber: shortcuts[session.id])
                 .tag(session.id)
                 .contextMenu {
                     Button("Restart Shell") { store.restartShell(session.id) }

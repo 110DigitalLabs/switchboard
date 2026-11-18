@@ -13,6 +13,7 @@ final class AppSettings {
         static let sessionGrouping = "sessionGrouping"
         static let ticketRepo = "ticketRepoPath"
         static let sidebarWidth = "sidebarWidth"
+        static let sessionListTextSize = "sessionListTextSize"
         static let terminalAppearance = "terminalAppearance"
         static let importedThemes = "importedTerminalThemes"
     }
@@ -48,6 +49,10 @@ final class AppSettings {
 
     var sidebarWidth: SidebarWidth {
         didSet { defaults.set(sidebarWidth.rawValue, forKey: Key.sidebarWidth) }
+    }
+
+    var sessionListTextSize: SessionListTextSize {
+        didSet { defaults.set(sessionListTextSize.rawValue, forKey: Key.sessionListTextSize) }
     }
 
     var terminalAppearance: TerminalAppearance {
@@ -90,6 +95,8 @@ final class AppSettings {
         sessionGrouping = defaults.string(forKey: Key.sessionGrouping).flatMap(SessionGrouping.init(rawValue:)) ?? .none
         ticketRepoPath = defaults.string(forKey: Key.ticketRepo)
         sidebarWidth = defaults.string(forKey: Key.sidebarWidth).flatMap(SidebarWidth.init(rawValue:)) ?? .third
+        sessionListTextSize = defaults.string(forKey: Key.sessionListTextSize)
+            .flatMap(SessionListTextSize.init(rawValue:)) ?? .small
         terminalAppearance = Self.load(TerminalAppearance.self, from: defaults, key: Key.terminalAppearance)
             ?? TerminalAppearance()
         importedThemes = Self.load([TerminalTheme].self, from: defaults, key: Key.importedThemes) ?? []

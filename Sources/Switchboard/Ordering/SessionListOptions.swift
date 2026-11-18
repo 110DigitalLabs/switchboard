@@ -56,3 +56,38 @@ enum SidebarWidth: String, CaseIterable, Identifiable, Sendable {
         }
     }
 }
+
+/// Text size of the session list rows. Small is the system sidebar size.
+enum SessionListTextSize: String, CaseIterable, Identifiable, Sendable {
+    case small
+    case medium
+    case large
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .small: "Small"
+        case .medium: "Medium"
+        case .large: "Large"
+        }
+    }
+
+    /// Point size of a row's title.
+    var titleSize: Double {
+        switch self {
+        case .small: 13
+        case .medium: 15
+        case .large: 17
+        }
+    }
+
+    /// Point size of a row's secondary lines.
+    var detailSize: Double {
+        switch self {
+        case .small: 10
+        case .medium: 12
+        case .large: 14
+        }
+    }
+}

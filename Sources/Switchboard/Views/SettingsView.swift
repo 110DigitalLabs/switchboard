@@ -36,6 +36,10 @@ private struct GeneralSettingsView: View {
                 ForEach(SidebarWidth.allCases) { Text($0.label).tag($0) }
             }
 
+            Picker("Session list text", selection: $settings.sessionListTextSize) {
+                ForEach(SessionListTextSize.allCases) { Text($0.label).tag($0) }
+            }
+
             Stepper(value: $settings.tempCleanupDays, in: 1...365) {
                 Text("Delete kept temp sessions after \(settings.tempCleanupDays) days")
             }
