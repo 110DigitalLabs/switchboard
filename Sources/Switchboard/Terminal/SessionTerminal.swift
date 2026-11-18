@@ -12,6 +12,7 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
     private let extraEnvironment: [String: String]
     private var pendingCommand: String?
     private var pendingDraft: String?
+    private var draftAttempts = 0
     /// Whether the agent's SessionStart hook will say when its input is up.
     private let agentReportsStart: Bool
 
@@ -35,6 +36,7 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
         let env = ShellEnvironment.variables(base: base, rowID: rowID, extra: extraEnvironment)
         pendingCommand = launch.command
         pendingDraft = launch.draft
+        draftAttempts = 0
 
         view.setProcessOutputHandler { [weak self] in
             Task { @MainActor in self?.shellProducedOutput() }
@@ -94,10 +96,39 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
         }
     }
 
+    /// The only place a draft reaches the PTY. It is typed only while some
+    /// process other than the shell (the agent) owns the terminal, so a
+    /// draft can never land at a shell prompt, and it is sanitized first.
     private func typeDraft() {
         guard let draft = pendingDraft, pendingCommand == nil, isRunning else { return }
+        guard agentIsInForeground else {
+            draftAttempts += 1
+            guard draftAttempts < Self.maxDraftAttempts else {
+                pendingDraft = nil
+                NSLog("Switchboard: dropped the draft prompt for row \(rowID): the shell is still in the foreground")
+                return
+            }
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(2))
+                self?.typeDraft()
+            }
+            return
+        }
         pendingDraft = nil
-        view.send(txt: draft)
+        let text = TypedText.sanitize(draft)
+        guard !text.isEmpty else { return }
+        view.send(txt: text)
+    }
+
+    private static let maxDraftAttempts = 5
+
+    /// Whether the PTY's foreground process group is not the shell's own.
+    private var agentIsInForeground: Bool {
+        guard let process = view.process else { return false }
+        let fd = process.childfd
+        let shell = process.shellPid
+        guard fd >= 0 else { return false }
+        return ForegroundProcess.isOtherThanShell(foregroundGroup: tcgetpgrp(fd), shellPID: shell)
     }
 
     // MARK: LocalProcessTerminalViewDelegate

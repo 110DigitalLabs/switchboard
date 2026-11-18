@@ -25,7 +25,8 @@ enum TicketPrompts {
         return "\(id) (\(singleLine(title)))"
     }
 
+    /// External text made safe to type: one line, no controls or escapes.
     static func singleLine(_ text: String) -> String {
-        text.components(separatedBy: .newlines).filter { !$0.isEmpty }.joined(separator: " ")
+        TypedText.sanitize(text).trimmingCharacters(in: .whitespaces)
     }
 }
