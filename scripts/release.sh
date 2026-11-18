@@ -96,7 +96,10 @@ fi
 
 echo "==> Verifying signature"
 codesign --verify --deep --strict --verbose=2 "$app"
-codesign -dv "$app" 2>&1 | grep -q "flags=.*runtime" || fail "hardened runtime is not enabled on $app"
+# Captured first: with pipefail, grep -q closing the pipe early fails codesign.
+signature=$(codesign -dvv "$app" 2>&1)
+grep -q "flags=.*runtime" <<<"$signature" || fail "hardened runtime is not enabled on $app"
+grep -q "Authority=Developer ID Application" <<<"$signature" || fail "$app is not signed with a Developer ID"
 
 echo "==> Notarizing"
 ditto -c -k --keepParent "$app" "$zip"
