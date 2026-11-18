@@ -15,6 +15,15 @@ struct WindowZoomer: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {}
 
     private final class ZoomingView: NSView {
+        static func firstSplitView(in view: NSView?) -> NSSplitView? {
+            guard let view else { return nil }
+            if let split = view as? NSSplitView, split.isVertical { return split }
+            for child in view.subviews {
+                if let found = firstSplitView(in: child) { return found }
+            }
+            return nil
+        }
+
         var onWindow: @MainActor (NSWindow) -> Void = { _ in }
         private var didZoom = false
 
@@ -27,6 +36,13 @@ struct WindowZoomer: NSViewRepresentable {
             DispatchQueue.main.async {
                 guard let screen = window.screen ?? NSScreen.main else { return }
                 window.setFrame(screen.visibleFrame, display: true)
+                // HSplitView ignores idealWidth for its first layout, so place
+                // the divider at one third once the window has its final size.
+                DispatchQueue.main.async {
+                    guard let split = Self.firstSplitView(in: window.contentView),
+                          split.arrangedSubviews.count == 2 else { return }
+                    split.setPosition((split.bounds.width / 3).rounded(), ofDividerAt: 0)
+                }
             }
         }
     }
