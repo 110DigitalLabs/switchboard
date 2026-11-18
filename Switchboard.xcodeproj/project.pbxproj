@@ -172,6 +172,7 @@
 		FBA20D705AB2AF5D737ED0C4 /* AssignedTicketsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D3D8200A0EBB353AAD3817F /* AssignedTicketsView.swift */; };
 		FC745001830D989FD5D6718B /* GeminiHookConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D4AD75720BA51D9B20E4A7 /* GeminiHookConfig.swift */; };
 		FDC4C56BB3F35DA9AC797455 /* PersistedState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A53A8F57F03EB05E3FAA5E /* PersistedState.swift */; };
+		FE5F915E5649AD6320C6B57B /* BrowserWebAuthenticatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E543E0777AFD294D4020AB0 /* BrowserWebAuthenticatorTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -200,6 +201,7 @@
 		0BBE2B4E1A55E1801BA4BAC3 /* GHJSONTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GHJSONTests.swift; sourceTree = "<group>"; };
 		0C5EF53BD345DB47363DA6B4 /* TicketSessionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketSessionsTests.swift; sourceTree = "<group>"; };
 		0CCDEA6C2AAF2C4F9239874F /* TicketFolder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketFolder.swift; sourceTree = "<group>"; };
+		0E543E0777AFD294D4020AB0 /* BrowserWebAuthenticatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserWebAuthenticatorTests.swift; sourceTree = "<group>"; };
 		0EFE1312F36407E350942C36 /* TicketReferenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketReferenceTests.swift; sourceTree = "<group>"; };
 		1016B6907C786F4A58DE5881 /* LinearConnecting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinearConnecting.swift; sourceTree = "<group>"; };
 		12C2856358702CF8228DB901 /* MCPLinearService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPLinearService.swift; sourceTree = "<group>"; };
@@ -262,6 +264,7 @@
 		7A66624D17BE11352046A00B /* RepoDropdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepoDropdown.swift; sourceTree = "<group>"; };
 		7C537EAD9BF056EB3DEFD6AD /* TicketSessions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketSessions.swift; sourceTree = "<group>"; };
 		7E2120371F1D2B619976E80C /* TerminalPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalPane.swift; sourceTree = "<group>"; };
+		7ECBB8EE223A4466E7914D2A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8038AFEE718563162DFC5167 /* ReviewSessions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewSessions.swift; sourceTree = "<group>"; };
 		8241C022CE0C724477F37230 /* HookMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookMessage.swift; sourceTree = "<group>"; };
 		830F4A797B5E1C9EA65A8D63 /* SessionStoreNavigationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStoreNavigationTests.swift; sourceTree = "<group>"; };
@@ -411,6 +414,7 @@
 			isa = PBXGroup;
 			children = (
 				A550DE355AD05AFC9A44B5C1 /* Assets.xcassets */,
+				7ECBB8EE223A4466E7914D2A /* Info.plist */,
 				1C147B8EAECAF4E33CADBB18 /* App */,
 				E01EF81FFB8DD00D3323BC3A /* Cleanup */,
 				4BD8E3CE1989447B1076B798 /* GitHub */,
@@ -626,6 +630,7 @@
 			children = (
 				CDDB7CB2960410A88CFC186F /* AgentEventDecoderTests.swift */,
 				8C3DDB85C58986B2263B68AB /* AgentTests.swift */,
+				0E543E0777AFD294D4020AB0 /* BrowserWebAuthenticatorTests.swift */,
 				874CEF555ADF85AEF4F34ABA /* ClaudeTranscriptTests.swift */,
 				0BBE2B4E1A55E1801BA4BAC3 /* GHJSONTests.swift */,
 				B92BED2A71DA7E36D14D09D2 /* GitHubAccountTests.swift */,
@@ -793,6 +798,7 @@
 			files = (
 				F5852E11A8AAF81CA45915C9 /* AgentEventDecoderTests.swift in Sources */,
 				9F15615CF38F7489C7F51457 /* AgentTests.swift in Sources */,
+				FE5F915E5649AD6320C6B57B /* BrowserWebAuthenticatorTests.swift in Sources */,
 				7A853229AD10277C5BD541B2 /* ClaudeTranscriptTests.swift in Sources */,
 				82BC44D798C2FD9171B45846 /* GHJSONTests.swift in Sources */,
 				AC88B747154E038FED7EFE81 /* GitHubAccountTests.swift in Sources */,
@@ -1003,6 +1009,7 @@
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Sources/Switchboard/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Switchboard;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -1101,6 +1108,7 @@
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Sources/Switchboard/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Switchboard;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";

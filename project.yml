@@ -19,6 +19,14 @@ targets:
     sources: [Sources/Switchboard]
     dependencies:
       - package: SwiftTerm
+    info:
+      path: Sources/Switchboard/Info.plist
+      properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleURLTypes:
+          - CFBundleURLName: dev.switchboard.Switchboard.oauth
+            CFBundleURLSchemes: [switchboard]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.switchboard.Switchboard

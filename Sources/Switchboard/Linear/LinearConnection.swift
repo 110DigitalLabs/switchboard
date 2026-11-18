@@ -1,15 +1,15 @@
 import Foundation
 
 /// The real connector: Linear's hosted MCP server, OAuth via dynamic
-/// client registration + PKCE in ASWebAuthenticationSession, and the
+/// client registration + PKCE in the default browser, and the
 /// Keychain for the client registration and tokens.
 @MainActor
 final class LinearConnection: LinearConnecting {
     static let endpoint = URL(string: "https://mcp.linear.app/mcp")!
     nonisolated static let keychainService = "dev.switchboard.linear"
     /// Linear's DCR accepts custom schemes (checked against the live
-    /// server), and ASWebAuthenticationSession catches it without the app
-    /// registering the scheme or listening on a port.
+    /// server). The scheme is declared in Info.plist so the browser's
+    /// redirect reaches the app; see BrowserWebAuthenticator.
     static let callbackScheme = "switchboard"
     static let redirectURI = "switchboard://oauth/callback"
     static let registrationAccount = "client"
@@ -25,7 +25,7 @@ final class LinearConnection: LinearConnecting {
          authenticator: WebAuthenticating? = nil) {
         self.store = store
         self.urlSession = urlSession
-        self.authenticator = authenticator ?? SystemWebAuthenticator()
+        self.authenticator = authenticator ?? BrowserWebAuthenticator()
     }
 
     func restore() async -> LinearService? {
@@ -74,7 +74,7 @@ final class LinearConnection: LinearConnecting {
     }
 
     func cancelSignIn() {
-        (authenticator as? SystemWebAuthenticator)?.cancel()
+        authenticator.cancel()
     }
 
     /// The stored registration when it matches this server and redirect,
