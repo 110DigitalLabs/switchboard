@@ -120,6 +120,14 @@ struct ConversationHistoryTests {
         #expect(found.first { $0.conversationID == "mine" }?.title == "Rate limiter")
     }
 
+    @Test func knowsWhichClaudeConversationsStillHaveATranscript() throws {
+        #expect(ConversationHistory.exists(agent: .claudeCode, conversationID: "c1", in: locations))
+        try claudeTranscript("c1")
+        #expect(ConversationHistory.exists(agent: .claudeCode, conversationID: "c1", in: locations))
+        #expect(!ConversationHistory.exists(agent: .claudeCode, conversationID: "deleted", in: locations))
+        #expect(ConversationHistory.exists(agent: .codex, conversationID: "deleted", in: locations))
+    }
+
     @Test func parsesPsAndLsofOutput() {
         let ps = """
           83684 83667 Wed Nov 18 17:19:29 2026     claude --resume c2d7
@@ -152,7 +160,8 @@ struct ConversationHistoryTests {
         #expect(row.agent == .codex)
         #expect(row.agentConversationID == "x1")
         #expect(row.agentTitle == "add tests")
-        #expect(SessionLaunch.reopen(row, hooks: nil, directoryExists: { _ in true }).command == "codex resume x1")
+        #expect(SessionLaunch.reopen(row, hooks: nil, directoryExists: { _ in true },
+                                     conversationExists: { _, _ in true }).command == "codex resume x1")
     }
 
     @Test func recentActivityWindow() {

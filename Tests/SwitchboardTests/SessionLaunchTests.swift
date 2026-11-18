@@ -45,14 +45,23 @@ struct SessionLaunchTests {
 
     @Test func resumesInsideTheAgentsWorktree() {
         let session = worktreeSession(conversation: "c1", workingDirectory: "/repo/.claude/worktrees/x")
-        let launch = SessionLaunch.reopen(session, hooks: nil, directoryExists: { _ in true })
+        let launch = SessionLaunch.reopen(session, hooks: nil, directoryExists: { _ in true },
+                                          conversationExists: { _, _ in true })
         #expect(launch == SessionLaunch(directory: "/repo/.claude/worktrees/x", command: "claude --resume c1"))
     }
 
     @Test func resumesInFolderWhenNoWorkingDirectoryWasReported() {
         let session = worktreeSession(conversation: "c1", workingDirectory: nil)
-        let launch = SessionLaunch.reopen(session, hooks: nil, directoryExists: { _ in true })
+        let launch = SessionLaunch.reopen(session, hooks: nil, directoryExists: { _ in true },
+                                          conversationExists: { _, _ in true })
         #expect(launch == SessionLaunch(directory: "/repo", command: "claude --resume c1"))
+    }
+
+    @Test func deletedConversationStartsFreshInsteadOfFailingToResume() {
+        let session = worktreeSession(conversation: "c1", workingDirectory: "/repo/.claude/worktrees/x")
+        let launch = SessionLaunch.reopen(session, hooks: nil, directoryExists: { _ in true },
+                                          conversationExists: { _, _ in false })
+        #expect(launch == SessionLaunch(directory: "/repo", command: "claude -w"))
     }
 
     @Test func missingWorktreeFallsBackToFreshAgentInRepo() {

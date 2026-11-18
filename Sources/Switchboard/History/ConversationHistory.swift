@@ -36,6 +36,24 @@ enum ConversationHistory {
     static let headBytes = 64 * 1024
     static let tailBytes = 256 * 1024
 
+    /// False only when the agent's record of the conversation is known to be
+    /// gone, so resuming it would fail: Claude Code keeps one transcript per
+    /// conversation. Other agents are assumed to still have it.
+    static func exists(agent: Agent, conversationID: String) -> Bool {
+        exists(agent: agent, conversationID: conversationID, in: .standard())
+    }
+
+    static func exists(agent: Agent, conversationID: String, in locations: Locations) -> Bool {
+        guard agent == .claudeCode else { return true }
+        let folders = (try? FileManager.default.contentsOfDirectory(atPath: locations.claudeProjects.path)) ?? []
+        // No history folder at all: an unusual setup, so do not second-guess it.
+        guard !folders.isEmpty else { return true }
+        return folders.contains {
+            FileManager.default.fileExists(atPath: locations.claudeProjects
+                .appendingPathComponent($0).appendingPathComponent("\(conversationID).jsonl").path)
+        }
+    }
+
     // MARK: Claude Code
 
     /// `<projects>/<folder>/<id>.jsonl` only; sub-agent transcripts sit

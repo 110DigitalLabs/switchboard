@@ -18,15 +18,18 @@ struct SessionLaunch: Equatable, Sendable {
 
     /// Reopening an existing row after a relaunch or a restarted shell.
     /// With a known conversation, resume it where the agent last ran (the
-    /// worktree for worktree sessions). If that directory is gone, or there is
-    /// no conversation yet, start the agent fresh in the row's folder. If even
-    /// the folder is gone, open a plain shell in the home directory.
+    /// worktree for worktree sessions). If that directory or the agent's
+    /// record of the conversation is gone, or there is no conversation yet,
+    /// start the agent fresh in the row's folder. If even the folder is gone,
+    /// open a plain shell in the home directory.
     static func reopen(_ session: Session, hooks: HookInstallation?,
                        home: String = NSHomeDirectory(),
-                       directoryExists: (String) -> Bool = SessionLaunch.directoryExists) -> SessionLaunch {
+                       directoryExists: (String) -> Bool = SessionLaunch.directoryExists,
+                       conversationExists: (Agent, String) -> Bool = ConversationHistory.exists(agent:conversationID:))
+        -> SessionLaunch {
         if let id = session.agentConversationID {
             let directory = session.workingDirectory ?? session.folderPath
-            if directoryExists(directory) {
+            if directoryExists(directory), conversationExists(session.agent, id) {
                 return SessionLaunch(directory: directory,
                                      command: session.agent.resumeCommand(conversationID: id, hooks: hooks))
             }
