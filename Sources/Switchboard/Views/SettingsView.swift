@@ -26,10 +26,12 @@ struct SettingsView: View {
             }
 
             Section("Accounts") {
-                Text("Linear / GitHub sign-in — coming later")
-                    .foregroundStyle(.secondary)
+                LinearAccountRow()
+                LabeledContent("GitHub") {
+                    Text("Coming later").foregroundStyle(.secondary)
+                }
+                .disabled(true)
             }
-            .disabled(true)
         }
         .formStyle(.grouped)
         .frame(width: 480)

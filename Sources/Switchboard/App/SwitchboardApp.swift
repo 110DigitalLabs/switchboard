@@ -4,6 +4,7 @@ import SwiftUI
 struct SwitchboardApp: App {
     @State private var settings: AppSettings
     @State private var store: SessionStore
+    @State private var linear: LinearAccount
     private let hookServices: HookServices
     private let navigator: KeyboardNavigator
 
@@ -19,12 +20,19 @@ struct SwitchboardApp: App {
                                                object: nil, queue: .main) { [weak store] _ in
             MainActor.assumeIsolated { store?.saveNow() }
         }
+        // Tests must not read the real Keychain or reach Linear.
+        let linear = LinearAccount(connector: HookServices.isRunningTests
+                                       ? FakeLinearConnector() as LinearConnecting
+                                       : LinearConnection(),
+                                   monitorNetwork: !HookServices.isRunningTests)
+        Task { await linear.start() }
         let navigator = KeyboardNavigator(store: store)
         navigator.install()
         self.navigator = navigator
         self.hookServices = hookServices
         _settings = State(initialValue: settings)
         _store = State(initialValue: store)
+        _linear = State(initialValue: linear)
     }
 
     var body: some Scene {
@@ -32,6 +40,7 @@ struct SwitchboardApp: App {
             ContentView()
                 .environment(store)
                 .environment(settings)
+                .environment(linear)
                 .background(WindowZoomer { [navigator] in navigator.window = $0 })
         }
         .commands { SessionCommands(store: store) }
@@ -39,6 +48,7 @@ struct SwitchboardApp: App {
         Settings {
             SettingsView()
                 .environment(settings)
+                .environment(linear)
         }
     }
 }
