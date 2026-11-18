@@ -61,7 +61,14 @@ struct SwitchboardApp: App {
                 .environment(linear)
                 .environment(github)
                 .environment(ticketStatus)
-                .background(WindowZoomer { [navigator] in navigator.window = $0 })
+                .background(WindowZoomer(sidebarFraction: settings.sidebarWidth.fraction) { [navigator] in
+                    navigator.window = $0
+                })
+                .onChange(of: settings.sidebarWidth) { _, width in
+                    if let window = navigator.window {
+                        WindowZoomer.placeDivider(in: window, fraction: width.fraction)
+                    }
+                }
         }
         .commands { SessionCommands(store: store) }
 

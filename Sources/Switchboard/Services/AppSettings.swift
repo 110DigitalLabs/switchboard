@@ -12,6 +12,7 @@ final class AppSettings {
         static let sessionSort = "sessionSort"
         static let sessionGrouping = "sessionGrouping"
         static let ticketRepo = "ticketRepoPath"
+        static let sidebarWidth = "sidebarWidth"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -43,6 +44,10 @@ final class AppSettings {
         didSet { defaults.set(ticketRepoPath, forKey: Key.ticketRepo) }
     }
 
+    var sidebarWidth: SidebarWidth {
+        didSet { defaults.set(sidebarWidth.rawValue, forKey: Key.sidebarWidth) }
+    }
+
     var homeFolder: URL { URL(fileURLWithPath: homeFolderPath, isDirectory: true) }
 
     init(defaults: UserDefaults = .standard) {
@@ -54,6 +59,7 @@ final class AppSettings {
         sessionSort = defaults.string(forKey: Key.sessionSort).flatMap(SessionSort.init(rawValue:)) ?? .ticket
         sessionGrouping = defaults.string(forKey: Key.sessionGrouping).flatMap(SessionGrouping.init(rawValue:)) ?? .none
         ticketRepoPath = defaults.string(forKey: Key.ticketRepo)
+        sidebarWidth = defaults.string(forKey: Key.sidebarWidth).flatMap(SidebarWidth.init(rawValue:)) ?? .third
     }
 
     static func defaultHomeFolder() -> String {

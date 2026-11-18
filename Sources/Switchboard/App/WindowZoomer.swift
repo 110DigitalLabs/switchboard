@@ -4,12 +4,22 @@ import SwiftUI
 /// Sizes the hosting window to the screen's visible frame once, on first
 /// appearance (zoomed, not a full-screen space), and reports the window.
 struct WindowZoomer: NSViewRepresentable {
+    var sidebarFraction: Double = 1.0 / 3
     var onWindow: @MainActor (NSWindow) -> Void = { _ in }
 
     func makeNSView(context: Context) -> NSView {
         let view = ZoomingView()
+        view.sidebarFraction = sidebarFraction
         view.onWindow = onWindow
         return view
+    }
+
+    /// Moves the first vertical split view's divider to `fraction` of its width.
+    @MainActor
+    static func placeDivider(in window: NSWindow, fraction: Double) {
+        guard let split = ZoomingView.firstSplitView(in: window.contentView),
+              split.arrangedSubviews.count == 2 else { return }
+        split.setPosition((split.bounds.width * fraction).rounded(), ofDividerAt: 0)
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {}
@@ -24,6 +34,7 @@ struct WindowZoomer: NSViewRepresentable {
             return nil
         }
 
+        var sidebarFraction: Double = 1.0 / 3
         var onWindow: @MainActor (NSWindow) -> Void = { _ in }
         private var didZoom = false
 
@@ -37,11 +48,10 @@ struct WindowZoomer: NSViewRepresentable {
                 guard let screen = window.screen ?? NSScreen.main else { return }
                 window.setFrame(screen.visibleFrame, display: true)
                 // HSplitView ignores idealWidth for its first layout, so place
-                // the divider at one third once the window has its final size.
+                // the divider once the window has its final size.
+                let fraction = self.sidebarFraction
                 DispatchQueue.main.async {
-                    guard let split = Self.firstSplitView(in: window.contentView),
-                          split.arrangedSubviews.count == 2 else { return }
-                    split.setPosition((split.bounds.width / 3).rounded(), ofDividerAt: 0)
+                    WindowZoomer.placeDivider(in: window, fraction: fraction)
                 }
             }
         }

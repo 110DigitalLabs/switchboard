@@ -23,10 +23,12 @@ Homebrew cask.
   folders, and user repos. Repos are discovered by scanning for git repos up to
   2 levels deep below it.
 - Temp cleanup: delete kept temp sessions after N days (default 30).
+- Session list width: one quarter | one third (default) | one half of the
+  window, applied at launch and when changed.
 - Linear and GitHub sign-in.
 
 ## Layout
-Full-screen window, split 1/3 left, 2/3 right.
+Full-screen window, split 1/3 left, 2/3 right by default (see Settings).
 - Left: search bar + repo dropdown at the top, then the session list.
 - Right: a pure terminal for the selected session. No diffs, editor, or review
   panes. (Diffs in V1 = user runs `git diff` / `gh pr diff` in the terminal.)

@@ -31,3 +31,28 @@ enum SessionGrouping: String, CaseIterable, Identifiable, Sendable {
         }
     }
 }
+
+/// The session list's share of the window width when the window opens.
+enum SidebarWidth: String, CaseIterable, Identifiable, Sendable {
+    case quarter
+    case third
+    case half
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .quarter: "One quarter"
+        case .third: "One third"
+        case .half: "One half"
+        }
+    }
+
+    var fraction: Double {
+        switch self {
+        case .quarter: 1.0 / 4
+        case .third: 1.0 / 3
+        case .half: 1.0 / 2
+        }
+    }
+}
