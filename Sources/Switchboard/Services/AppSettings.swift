@@ -24,7 +24,7 @@ final class AppSettings {
         didSet { defaults.set(homeFolderPath, forKey: Key.homeFolder) }
     }
 
-    /// Used by temp-folder cleanup in a later stage.
+    /// Kept temp and scratch rows are deleted this many days after closing.
     var tempCleanupDays: Int {
         didSet { defaults.set(tempCleanupDays, forKey: Key.tempCleanupDays) }
     }

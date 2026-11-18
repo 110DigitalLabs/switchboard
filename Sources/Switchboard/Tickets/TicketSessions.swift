@@ -2,16 +2,17 @@ import Foundation
 
 /// Pure rules for sessions that carry Linear tickets.
 enum TicketSessions {
-    /// Local sessions on a ticket, oldest first (the -A, -B … order).
+    /// Live local sessions on a ticket, oldest first (the -A, -B … order).
+    /// Kept (closed) rows have no terminal to switch to, so they don't count.
     static func existing(for ticketID: String, in sessions: [Session]) -> [Session] {
         sessions
-            .filter { $0.ticketID?.caseInsensitiveCompare(ticketID) == .orderedSame }
+            .filter { !$0.isKept && $0.ticketID?.caseInsensitiveCompare(ticketID) == .orderedSame }
             .sorted { ($0.createdAt, $0.id.uuidString) < ($1.createdAt, $1.id.uuidString) }
     }
 
     /// Assigned issues no local session works on yet, in Linear's order.
     static func unstarted(_ issues: [LinearIssue], sessions: [Session]) -> [LinearIssue] {
-        let started = Set(sessions.compactMap { $0.ticketID?.uppercased() })
+        let started = Set(sessions.filter { !$0.isKept }.compactMap { $0.ticketID?.uppercased() })
         return issues.filter { !started.contains($0.identifier.uppercased()) }
     }
 

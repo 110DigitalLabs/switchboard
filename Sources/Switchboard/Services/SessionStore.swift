@@ -25,6 +25,8 @@ final class SessionStore {
     var handoverProgress: [UUID: String] = [:]
     /// The row whose "Move to worktree…" sheet is open.
     var handoverRequestID: UUID?
+    /// The temp or scratch row whose "Delete folder?" dialog is open.
+    var closeRequestID: UUID?
 
     private(set) var repos: [Repo] = []
     private(set) var isScanningRepos = false
@@ -44,6 +46,11 @@ final class SessionStore {
         try await SummaryProcess.run(line: $0, directory: $1)
     }
     @ObservationIgnored var handoverDirectory = HandoverCommand.defaultDirectory()
+    /// Moves a folder to the Trash; injectable for tests.
+    @ObservationIgnored var trashItem: (URL) throws -> Void = {
+        try FileManager.default.trashItem(at: $0, resultingItemURL: nil)
+    }
+    @ObservationIgnored var cleanupTask: Task<Void, Never>?
     /// Called when a row gains a PR or a worktree to look PRs up for.
     @ObservationIgnored var onPullRequestSourcesChanged: (() -> Void)?
 
@@ -116,19 +123,20 @@ final class SessionStore {
 
     // MARK: Restoring
 
-    /// Loads the saved rows and reopens each one's terminal, resuming its
-    /// agent conversation where possible.
+    /// Loads the saved rows and reopens each live row's terminal, resuming
+    /// its agent conversation where possible. Kept rows stay closed.
     func restore() {
         guard let file else { return }
         let state = file.load()
         collapsedGroups = state.collapsedGroups
         sessions = state.sessions
-        for session in state.sessions {
+        for session in state.sessions where !session.isKept {
             let launch = SessionLaunch.reopen(session, hooks: terminals.hooks)
             NSLog("Switchboard: restoring row \(session.id) (\(session.agent.rawValue)) in \(launch.directory): \(launch.command ?? "shell only")")
             openTerminal(for: session, launch: launch)
         }
-        selectedID = state.selectedID ?? layout.visibleOrder.first
+        let live = Set(state.sessions.filter { !$0.isKept }.map(\.id))
+        selectedID = state.selectedID.flatMap { live.contains($0) ? $0 : nil } ?? layout.visibleOrder.first
         NSLog("Switchboard: restored \(state.sessions.count) session(s) from \(file.url.path)")
     }
 
@@ -147,7 +155,7 @@ final class SessionStore {
     func close(_ id: UUID) {
         terminals.remove(id)
         sessions.removeAll { $0.id == id }
-        if selectedID == id { selectedID = sessions.last?.id }
+        if selectedID == id { selectedID = sessions.last(where: { !$0.isKept })?.id }
     }
 
     func setState(_ state: WorkingState, for id: UUID) {

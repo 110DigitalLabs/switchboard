@@ -26,6 +26,7 @@ struct SessionListView: View {
             }
         }
         .listStyle(.sidebar)
+        .modifier(CloseFolderDialog())
         .overlay {
             if store.sessions.isEmpty {
                 Text("No sessions")
@@ -39,20 +40,53 @@ struct SessionListView: View {
                 set: { store.setCollapsed(key, !$0) })
     }
 
+    @ViewBuilder
     private func row(_ entry: SessionListLayout.Entry) -> some View {
-        SessionRowView(session: entry.session, ticketLabel: entry.ticketLabel,
-                       handoverProgress: store.handoverProgress[entry.session.id])
-            .tag(entry.session.id)
-            .contextMenu {
-                Button("Restart Shell") { store.restartShell(entry.session.id) }
-                    .disabled(entry.session.workingState != .exited)
-                if entry.session.kind == .folder || entry.session.kind == .temp {
-                    Button("Move to Worktree…") { store.handoverRequestID = entry.session.id }
-                        .disabled(!entry.session.canMoveToWorktree
-                                  || store.handoverProgress[entry.session.id] != nil)
+        let session = entry.session
+        if let closedAt = session.closedAt {
+            SessionRowView(session: session, ticketLabel: entry.ticketLabel,
+                           keptNote: TempCleanupPolicy.keptNote(closedAt: closedAt, now: Date(),
+                                                                days: store.settings.tempCleanupDays))
+                .opacity(0.5)
+                .contextMenu {
+                    Button("Reopen") { store.reopenKept(session.id) }
+                    Divider()
+                    Button("Delete Now", role: .destructive) { store.deleteKept(session.id) }
                 }
-                Divider()
-                Button("Close Session") { store.close(entry.session.id) }
-            }
+        } else {
+            SessionRowView(session: session, ticketLabel: entry.ticketLabel,
+                           handoverProgress: store.handoverProgress[session.id])
+                .tag(session.id)
+                .contextMenu {
+                    Button("Restart Shell") { store.restartShell(session.id) }
+                        .disabled(session.workingState != .exited)
+                    if session.kind == .folder || session.kind == .temp {
+                        Button("Move to Worktree…") { store.handoverRequestID = session.id }
+                            .disabled(!session.canMoveToWorktree || store.handoverProgress[session.id] != nil)
+                    }
+                    Divider()
+                    Button("Close Session") { store.requestClose(session.id) }
+                }
+        }
+    }
+}
+
+/// "Delete folder <path>?" when closing a temp or scratch row.
+private struct CloseFolderDialog: ViewModifier {
+    @Environment(SessionStore.self) private var store
+
+    func body(content: Content) -> some View {
+        let session = store.closeRequestID.flatMap { id in store.sessions.first { $0.id == id } }
+        content.alert(
+            "Delete folder \((session?.folderPath ?? "") as NSString).abbreviatingWithTildeInPath)?",
+            isPresented: Binding(get: { session != nil }, set: { if !$0 { store.closeRequestID = nil } }),
+            presenting: session
+        ) { session in
+            Button("Delete", role: .destructive) { store.closeDeletingFolder(session.id) }
+            Button("Keep") { store.closeKeepingFolder(session.id) }
+            Button("Cancel", role: .cancel) {}
+        } message: { _ in
+            Text("Delete moves it to the Trash. Keep leaves it in the Temp section, deleted after \(store.settings.tempCleanupDays) days.")
+        }
     }
 }

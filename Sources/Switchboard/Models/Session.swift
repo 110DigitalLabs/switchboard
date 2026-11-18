@@ -25,6 +25,11 @@ struct Session: Identifiable, Hashable, Sendable {
     var activity = RowActivity()
     /// Shown on the row from a finished / needs-input event until it is viewed.
     var hasBadge = false
+    /// Set when a temp or scratch row was closed and its folder kept: the row
+    /// stays, without a terminal, in the Temp group until cleanup deletes it.
+    var closedAt: Date?
+
+    var isKept: Bool { closedAt != nil }
 
     init(id: UUID = UUID(), kind: SessionKind, folderPath: String, agent: Agent, createdAt: Date = Date()) {
         self.id = id

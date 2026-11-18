@@ -16,7 +16,7 @@ enum SessionOrdering {
             .init(id: id, title: title, items: items, isCollapsed: collapsed.contains(id))
         }
 
-        let main = sessions.filter { !$0.kind.isBottomGrouped }
+        let main = sessions.filter { !$0.kind.isBottomGrouped && !$0.isKept }
         var sections: [SessionListLayout.Section] = []
 
         switch grouping {
@@ -50,13 +50,19 @@ enum SessionOrdering {
             }
         }
 
-        let scratch = sessions.filter { $0.kind == .scratch }
+        let scratch = sessions.filter { $0.kind == .scratch && !$0.isKept }
         if !scratch.isEmpty {
             sections.append(section(scratchSectionID, "Scratch", entries(scratch).map { .session($0) }))
         }
-        let temp = sessions.filter { $0.kind == .temp }
-        if !temp.isEmpty {
-            sections.append(section(tempSectionID, "Temp", entries(temp).map { .session($0) }))
+        // Live temp rows, then kept (closed) temp and scratch rows, newest
+        // closed first.
+        let temp = sessions.filter { $0.kind == .temp && !$0.isKept }
+        let kept = sessions.filter(\.isKept).sorted {
+            ($0.closedAt!, $0.id.uuidString) > ($1.closedAt!, $1.id.uuidString)
+        }
+        if !temp.isEmpty || !kept.isEmpty {
+            let items = entries(temp) + kept.map { .init(session: $0, ticketLabel: labels[$0.id]) }
+            sections.append(section(tempSectionID, "Temp", items.map { .session($0) }))
         }
         return SessionListLayout(sections: sections)
     }

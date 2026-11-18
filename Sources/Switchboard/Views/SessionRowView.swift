@@ -6,6 +6,8 @@ struct SessionRowView: View {
     var ticketLabel: String?
     /// "Move to worktree" progress, while it runs.
     var handoverProgress: String?
+    /// "kept · deletes in N days" for a closed row whose folder was kept.
+    var keptNote: String?
 
     private var title: String { session.agentTitle ?? ticketLabel ?? session.title }
 
@@ -42,7 +44,11 @@ struct SessionRowView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
-                if let status = session.statusText {
+                if let keptNote {
+                    Text(keptNote)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else if let status = session.statusText {
                     Text(status)
                         .font(.caption.monospaced())
                         .foregroundStyle(.tertiary)
@@ -52,13 +58,15 @@ struct SessionRowView: View {
             }
             Spacer(minLength: 4)
             PRIconsView(urls: session.prURLs)
-            if session.hasBadge {
+            if session.hasBadge && keptNote == nil {
                 Circle()
                     .fill(.red)
                     .frame(width: 8, height: 8)
                     .accessibilityLabel("Unread")
             }
-            StateIndicator(state: session.workingState)
+            if keptNote == nil {
+                StateIndicator(state: session.workingState)
+            }
         }
         .padding(.vertical, 2)
     }

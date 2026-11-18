@@ -42,13 +42,13 @@ struct SessionListLayout: Equatable {
 
     var sections: [Section]
 
-    /// Session IDs in on-screen order, skipping collapsed sections and
-    /// collapsed ticket groups.
+    /// Session IDs in on-screen order, skipping collapsed sections,
+    /// collapsed ticket groups and kept (closed) rows, which have no terminal.
     var visibleOrder: [UUID] {
         sections.filter { !$0.isCollapsed }.flatMap { section in
             section.items.flatMap { item -> [UUID] in
                 switch item {
-                case .session(let entry): [entry.id]
+                case .session(let entry): entry.session.isKept ? [] : [entry.id]
                 case .ticket(let group): group.isCollapsed ? [] : group.entries.map(\.id)
                 }
             }
