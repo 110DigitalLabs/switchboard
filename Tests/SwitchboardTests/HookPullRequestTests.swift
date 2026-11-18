@@ -18,12 +18,53 @@ struct HookPullRequestTests {
         #expect(event("claude", "PostToolUse", json)?.prURLs == ["https://github.com/acme/api/pull/42"])
     }
 
-    @Test func urlInToolInputCountsAndIsCanonicalised() {
+    @Test func viewingSomeoneElsesPRDoesNotLinkIt() {
         let json = """
         {"tool_name":"Bash","tool_input":{"command":"gh pr view https://github.com/Acme/api/pull/7/files"},
          "tool_response":{"stdout":"title: x\\nurl: https://github.com/Acme/api/pull/7\\n"}}
         """
+        #expect(event("claude", "PostToolUse", json)?.prURLs == [])
+        let mention = """
+        {"tool_name":"Bash","tool_input":{"command":"git commit -m 'run gh pr create later'"},
+         "tool_response":{"stdout":"see https://github.com/a/b/pull/8"}}
+        """
+        #expect(event("claude", "PostToolUse", mention)?.prURLs == [])
+        let read = """
+        {"tool_name":"Read","tool_input":{"file_path":"/x"},
+         "tool_response":{"content":"gh pr create\\nhttps://github.com/a/b/pull/8"}}
+        """
+        #expect(event("claude", "PostToolUse", read)?.prURLs == [])
+    }
+
+    @Test func createURLIsTakenFromTheResponseOnlyAndCanonicalised() {
+        let json = """
+        {"tool_name":"Bash","tool_input":{"command":"cd api && gh pr create --body 'follows https://github.com/x/y/pull/1'"},
+         "tool_response":{"stdout":"https://github.com/Acme/api/pull/7/files\\n"}}
+        """
         #expect(event("claude", "PostToolUse", json)?.prURLs == ["https://github.com/Acme/api/pull/7"])
+    }
+
+    @Test func mcpCreatePullRequestLinksButOtherMCPToolsDoNot() {
+        let create = """
+        {"tool_name":"mcp__github__create_pull_request","tool_input":{"owner":"a","repo":"b","title":"t"},
+         "tool_response":{"html_url":"https://github.com/a/b/pull/11","number":11}}
+        """
+        #expect(event("claude", "PostToolUse", create)?.prURLs == ["https://github.com/a/b/pull/11"])
+        let get = """
+        {"tool_name":"mcp__github__get_pull_request","tool_input":{"owner":"a","repo":"b","pullNumber":12},
+         "tool_response":{"html_url":"https://github.com/a/b/pull/12"}}
+        """
+        #expect(event("claude", "PostToolUse", get)?.prURLs == [])
+    }
+
+    @Test func ghPRCreateDetection() {
+        #expect(HookPullRequests.runsGHPRCreate("gh pr create --fill"))
+        #expect(HookPullRequests.runsGHPRCreate("git push -u origin x && gh pr create"))
+        #expect(HookPullRequests.runsGHPRCreate("/opt/homebrew/bin/gh pr create"))
+        #expect(HookPullRequests.runsGHPRCreate("url=$(gh pr create --fill)"))
+        #expect(!HookPullRequests.runsGHPRCreate("gh pr view 7"))
+        #expect(!HookPullRequests.runsGHPRCreate("gh pr created"))
+        #expect(!HookPullRequests.runsGHPRCreate("echo 'gh pr create'"))
     }
 
     @Test func codexAndGeminiShapes() {
@@ -41,11 +82,11 @@ struct HookPullRequestTests {
 
     @Test func otherEventsAndNonPRLinksAreIgnored() {
         let json = """
-        {"tool_input":{"command":"gh pr create"},"tool_response":{"stdout":"https://github.com/a/b/pull/5"}}
+        {"tool_name":"Bash","tool_input":{"command":"gh pr create"},"tool_response":{"stdout":"https://github.com/a/b/pull/5"}}
         """
         #expect(event("claude", "PreToolUse", json)?.prURLs == [])
         let issue = """
-        {"tool_input":{"command":"x"},"tool_response":{"stdout":"https://github.com/a/b/issues/5 https://github.com/a/b/pull/abc https://gitlab.com/a/b/pull/1"}}
+        {"tool_name":"Bash","tool_input":{"command":"gh pr create"},"tool_response":{"stdout":"https://github.com/a/b/issues/5 https://github.com/a/b/pull/abc https://gitlab.com/a/b/pull/1"}}
         """
         #expect(event("claude", "PostToolUse", issue)?.prURLs == [])
         #expect(event("claude", "UserPromptSubmit", #"{"prompt":"see https://github.com/a/b/pull/9"}"#)?.prURLs == [])
