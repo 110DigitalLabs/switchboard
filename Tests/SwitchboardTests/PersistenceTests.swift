@@ -12,7 +12,6 @@ struct PersistenceTests {
         session.linearProjectName = "Core"
         session.prURLs = ["https://x/pr/1"]
         session.agentTitle = "Title"
-        session.statusText = "live"
         session.hasBadge = true
         session.workingState = .working
         let state = PersistedState(sessions: [session], collapsedGroups: ["scratch"], selectedID: session.id)
@@ -20,7 +19,6 @@ struct PersistenceTests {
         let decoded = try PersistedState.decode(state.encoded())
 
         var expected = session
-        expected.statusText = nil
         expected.hasBadge = false
         expected.activity = RowActivity()
         #expect(decoded == PersistedState(sessions: [expected], collapsedGroups: ["scratch"], selectedID: session.id))

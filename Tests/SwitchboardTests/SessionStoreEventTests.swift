@@ -65,10 +65,9 @@ struct SessionStoreEventTests {
         #expect(store.sessions[0].hasBadge)
     }
 
-    @Test func statusLineTextModelAreShown() {
+    @Test func statusLineModelIsShown() {
         let (store, session) = makeStore()
         store.handle(AgentEvent(rowID: session.id, kind: .statusLine("\u{1B}[36mOpus\u{1B}[0m\nctx 3%\n"), model: "Opus"))
-        #expect(store.sessions[0].statusText == "Opus  ctx 3%")
         #expect(store.sessions[0].agentModel == "Opus")
     }
 }

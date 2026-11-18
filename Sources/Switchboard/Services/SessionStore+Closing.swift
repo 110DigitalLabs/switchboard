@@ -31,7 +31,6 @@ extension SessionStore {
         session.closedAt = now
         session.activity = RowActivity()
         session.hasBadge = false
-        session.statusText = nil
         update(session)
         notifier?.clear(rowID: id)
         if selectedID == id { selectedID = layout.visibleOrder.first }

@@ -13,7 +13,6 @@ extension SessionStore {
                 // and a relaunch) takes over the row.
                 if session.agentConversationID != nil {
                     session.agentTitle = nil
-                    session.statusText = nil
                     session.workingDirectory = nil
                 }
                 session.agentConversationID = id
@@ -26,10 +25,6 @@ extension SessionStore {
         }
         if let model = event.model { session.agentModel = model }
         if let title = event.title { session.agentTitle = title }
-        if case .statusLine(let raw) = event.kind {
-            let text = StatusLineText.singleLine(raw)
-            session.statusText = text.isEmpty ? nil : text
-        }
 
         let taggedTicket = TicketTagging.ticket(toTag: session, prompt: event.prompt,
                                                 teamKeys: ticketSource?.teamKeys ?? [])

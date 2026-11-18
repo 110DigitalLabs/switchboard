@@ -20,8 +20,6 @@ struct Session: Identifiable, Hashable, Sendable {
     var linearProjectName: String?
     var prURLs: [String] = []
     var agentModel: String?
-    /// The agent's latest status-line text, on one line without escapes.
-    var statusText: String?
     var activity = RowActivity()
     /// Shown on the row from a finished / needs-input event until it is viewed.
     var hasBadge = false

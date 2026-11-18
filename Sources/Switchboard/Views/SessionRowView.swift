@@ -48,12 +48,6 @@ struct SessionRowView: View {
                     Text(keptNote)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                } else if let status = session.statusText {
-                    Text(status)
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
                 }
             }
             Spacer(minLength: 4)
