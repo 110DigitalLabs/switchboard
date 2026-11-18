@@ -2,6 +2,9 @@ import SwiftUI
 
 struct SessionListView: View {
     @Environment(SessionStore.self) private var store
+    @State private var resumeRequest: PastConversation?
+
+    static let elsewhereSectionID = "elsewhere"
 
     var body: some View {
         @Bindable var store = store
@@ -24,17 +27,39 @@ struct SessionListView: View {
                     Text(section.title)
                 }
             }
+            if !store.elsewhere.isEmpty {
+                Section(isExpanded: expansion(Self.elsewhereSectionID)) {
+                    ForEach(store.elsewhere) { conversation in
+                        ElsewhereRowView(conversation: conversation)
+                            .contentShape(Rectangle())
+                            .onTapGesture { resumeRequest = conversation }
+                            .contextMenu {
+                                Button("Resume Here…") { resumeRequest = conversation }
+                            }
+                    }
+                } header: {
+                    Text("Running Elsewhere")
+                        .help("Claude Code and Codex sessions open in other terminals. Click one to move it here.")
+                }
+            }
         }
         .listStyle(.sidebar)
         .modifier(CloseFolderDialog())
+        .confirmationDialog("Resume “\(resumeRequest?.displayTitle ?? "")” here?",
+                            isPresented: Binding(get: { resumeRequest != nil },
+                                                 set: { if !$0 { resumeRequest = nil } }),
+                            presenting: resumeRequest) { conversation in
+            Button("Resume Here") { store.resume(conversation) }
+            Button("Cancel", role: .cancel) {}
+        } message: { conversation in
+            Text("It is still open in another terminal. Quit it there first (/exit in Claude Code, "
+                 + "Ctrl-C in Codex): running one conversation in two places mixes up its history."
+                 + (conversation.isRecentlyActive() ? "\n\nIt was working in the last two minutes." : ""))
+        }
         .overlay {
-            if store.sessions.isEmpty {
-                VStack(spacing: 8) {
-                    Text("No sessions")
-                        .foregroundStyle(.secondary)
-                    Button("Resume Existing…") { store.isResumePresented = true }
-                        .help("Reopen a Claude Code or Codex session running in another terminal")
-                }
+            if store.sessions.isEmpty && store.elsewhere.isEmpty {
+                Text("No sessions")
+                    .foregroundStyle(.secondary)
             }
         }
     }

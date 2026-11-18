@@ -21,7 +21,10 @@ struct SwitchboardApp: App {
         hookServices.connect(to: store)
         store.restore()
         // Kept temp rows past Settings' N days: at launch, then every 6 hours.
-        if !HookServices.isRunningTests { store.startTempCleanup() }
+        if !HookServices.isRunningTests {
+            store.startTempCleanup()
+            store.startWatchingElsewhere()
+        }
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification,
                                                object: nil, queue: .main) { [weak store] _ in
             MainActor.assumeIsolated { store?.saveNow() }

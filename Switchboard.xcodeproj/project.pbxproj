@@ -43,7 +43,6 @@
 		2F45F234191AF73E0419CCB8 /* ConversationHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A53603D58DD4D7A848C1FC8 /* ConversationHistory.swift */; };
 		370C601A89CBD9DB95AF1DF4 /* ClaudeHookConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A620382F268EA3BAF3296C8 /* ClaudeHookConfig.swift */; };
 		3944FD414C8DE413A5C32D70 /* TempCleanupPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = D61BD17543B3AF0D6C42D49E /* TempCleanupPolicy.swift */; };
-		3B53BB18C58B70B9A2E1898E /* ResumeExistingSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1CD76477760C0CD43D8704E /* ResumeExistingSheet.swift */; };
 		3BE67CE6E66A1D88D7062488 /* PastConversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53C959A64F1B9CE975D7B42B /* PastConversation.swift */; };
 		3C6E9D262D8D5408C0AF0E92 /* PullRequestDisplayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFDCCC7C8800A46B6F14FB38 /* PullRequestDisplayTests.swift */; };
 		3ECD27B5EDA2BCA60ABAA041 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2E430E5F4B5235C1F539DD6 /* SidebarView.swift */; };
@@ -134,6 +133,7 @@
 		ABA2275796BBAA0795295EA5 /* SessionListLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF59FDEECA501D0832FE033 /* SessionListLayout.swift */; };
 		AC88B747154E038FED7EFE81 /* GitHubAccountTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B92BED2A71DA7E36D14D09D2 /* GitHubAccountTests.swift */; };
 		ACD44222F2145516873B9C8F /* NewSessionTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A0E6D35534B0E7BE9C2DF37 /* NewSessionTarget.swift */; };
+		AD2F0C9E84D78BE04A860E41 /* ElsewhereRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4EE8CB1AC978B75E0ECA761 /* ElsewhereRowView.swift */; };
 		AE453824B2097C2D4ADD638F /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = A312E608C6A096A518745553 /* Session.swift */; };
 		AFD8231EA08A23DF8B9FC6EB /* TicketTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE9A6627CB1C61566C70AAA1 /* TicketTestSupport.swift */; };
 		B01608AB9B2B7C4BA9D9BC7B /* RepoScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 286C76AF9E1E1E67A3006636 /* RepoScannerTests.swift */; };
@@ -342,7 +342,6 @@
 		CDF82D97ABED8C1A2FA4E7FB /* ProcessRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessRunner.swift; sourceTree = "<group>"; };
 		CE074DD83D79DFF98A400269 /* PersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceTests.swift; sourceTree = "<group>"; };
 		CF5950FDA7A0F23781E15058 /* TicketPrompts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketPrompts.swift; sourceTree = "<group>"; };
-		D1CD76477760C0CD43D8704E /* ResumeExistingSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResumeExistingSheet.swift; sourceTree = "<group>"; };
 		D2E430E5F4B5235C1F539DD6 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		D519FCDC1E2796AA8DA4F4FB /* AgentEventKinds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentEventKinds.swift; sourceTree = "<group>"; };
 		D61BD17543B3AF0D6C42D49E /* TempCleanupPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TempCleanupPolicy.swift; sourceTree = "<group>"; };
@@ -368,6 +367,7 @@
 		F1FE4E4A28D4170EEBF6808E /* OAuthTokenManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthTokenManager.swift; sourceTree = "<group>"; };
 		F31291FD06D5754081341F99 /* CheckoutInspecting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckoutInspecting.swift; sourceTree = "<group>"; };
 		F4906BEC3406BAC63DA3ADEE /* TicketReference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketReference.swift; sourceTree = "<group>"; };
+		F4EE8CB1AC978B75E0ECA761 /* ElsewhereRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElsewhereRowView.swift; sourceTree = "<group>"; };
 		F8A266D2FBC6D1B06B33740F /* ConversationHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationHistoryTests.swift; sourceTree = "<group>"; };
 		FAC0935615532BA8E78E5CF2 /* HandoverCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandoverCommand.swift; sourceTree = "<group>"; };
 		FAE77E8901098E8D336A06BD /* Repo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Repo.swift; sourceTree = "<group>"; };
@@ -498,6 +498,7 @@
 			children = (
 				6D3D8200A0EBB353AAD3817F /* AssignedTicketsView.swift */,
 				8B1746452A46C30D4C82BADC /* ContentView.swift */,
+				F4EE8CB1AC978B75E0ECA761 /* ElsewhereRowView.swift */,
 				CC7C05AB1E70FD1386A38F9C /* GitHubAccountRow.swift */,
 				52D70731960F9E18663F2751 /* IssueRowView.swift */,
 				354369761239CEC1D15BBE0D /* LinearAccountRow.swift */,
@@ -506,7 +507,6 @@
 				91E2A871F14A72E97E751A8B /* PRIconsView.swift */,
 				6233615DAD39E2D0B88CCD8F /* PullRequestSearchRow.swift */,
 				7A66624D17BE11352046A00B /* RepoDropdown.swift */,
-				D1CD76477760C0CD43D8704E /* ResumeExistingSheet.swift */,
 				04B6F4CD6EF320EA7CB02039 /* SearchHeaderView.swift */,
 				B96BAEE4F9CF7B0BE4DFEA18 /* SearchResultsView.swift */,
 				A4983C2F8897D0A3EC1BA0C0 /* SessionListControls.swift */,
@@ -899,6 +899,7 @@
 				2F45F234191AF73E0419CCB8 /* ConversationHistory.swift in Sources */,
 				0C2F675B45D3976F3B2F7D49 /* CredentialStore.swift in Sources */,
 				8D18DF03CE818F5EBAD8958B /* DebugLinear.swift in Sources */,
+				AD2F0C9E84D78BE04A860E41 /* ElsewhereRowView.swift in Sources */,
 				A048E6AC1E32819ACD4E6D4F /* FakeLinearService.swift in Sources */,
 				67ABF4D04D281D0E5BB66549 /* ForegroundProcess.swift in Sources */,
 				3FAD19DAA38B20FE3C89A802 /* GHCLIService.swift in Sources */,
@@ -953,7 +954,6 @@
 				E926B753B978BC1D585F4E39 /* Repo.swift in Sources */,
 				87191AD36322623793A3BDF0 /* RepoDropdown.swift in Sources */,
 				69702D869512F7EE1E8D553A /* RepoScanner.swift in Sources */,
-				3B53BB18C58B70B9A2E1898E /* ResumeExistingSheet.swift in Sources */,
 				CC26E79DB3ECA02B01B60D75 /* ReviewSessions.swift in Sources */,
 				9B0179300E1092A8A5DA211F /* RowActivity.swift in Sources */,
 				C4070F90DD809B9949972D75 /* ScratchFolder.swift in Sources */,

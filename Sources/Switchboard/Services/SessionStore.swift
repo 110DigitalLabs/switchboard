@@ -28,8 +28,9 @@ final class SessionStore {
     /// The temp or scratch row whose "Delete folder?" dialog is open.
     var closeRequestID: UUID?
 
-    /// The "Resume Existing…" sheet.
-    var isResumePresented = false
+    /// Claude Code and Codex conversations running in other terminals,
+    /// newest first; refreshed by `startWatchingElsewhere()`.
+    var elsewhere: [PastConversation] = []
 
     private(set) var repos: [Repo] = []
     private(set) var isScanningRepos = false
@@ -54,6 +55,7 @@ final class SessionStore {
         try FileManager.default.trashItem(at: $0, resultingItemURL: nil)
     }
     @ObservationIgnored var cleanupTask: Task<Void, Never>?
+    @ObservationIgnored var elsewhereTask: Task<Void, Never>?
     /// Called when a row gains a PR or a worktree to look PRs up for.
     @ObservationIgnored var onPullRequestSourcesChanged: (() -> Void)?
 

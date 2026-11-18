@@ -164,6 +164,17 @@ struct ConversationHistoryTests {
                                      conversationExists: { _, _ in true }).command == "codex resume x1")
     }
 
+    @Test @MainActor func elsewhereLeavesOutConversationsRowsHereOwn() {
+        let store = SessionStore(settings: AppSettings(defaults: UserDefaults(suiteName: "elsewhere-\(UUID())")!))
+        let mine = PastConversation(agent: .claudeCode, conversationID: "mine", directory: "/a",
+                                    title: nil, firstPrompt: nil, lastActive: now)
+        let theirs = PastConversation(agent: .codex, conversationID: "theirs", directory: "/b",
+                                      title: nil, firstPrompt: nil, lastActive: now)
+        store.add(SessionStore.row(resuming: mine), startTerminal: false)
+        store.updateElsewhere([mine, theirs])
+        #expect(store.elsewhere == [theirs])
+    }
+
     @Test func recentActivityWindow() {
         let now = Date()
         let conversation = PastConversation(agent: .claudeCode, conversationID: "c", directory: "/",
