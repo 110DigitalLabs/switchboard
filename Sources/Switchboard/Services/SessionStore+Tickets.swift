@@ -37,6 +37,41 @@ extension SessionStore {
             draft: TicketPrompts.draft(for: session))
     }
 
+    /// Moves a row to another ticket's group, or out of any group when
+    /// `input` is nil or blank. Accepts an ID ("eng-12") or a Linear URL.
+    /// Returns false, changing nothing, when the input isn't a ticket.
+    @discardableResult
+    func setTicket(_ input: String?, for rowID: UUID) -> Bool {
+        let trimmed = input?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let ticketID: String?
+        if trimmed.isEmpty {
+            ticketID = nil
+        } else if let id = TicketReference.parse(trimmed)?.linearIdentifier {
+            ticketID = id
+        } else {
+            return false
+        }
+        guard var session = sessions.first(where: { $0.id == rowID }) else { return false }
+        session.ticketSetByUser = true
+        if session.ticketID != ticketID {
+            session.ticketID = ticketID
+            // Carry over what a sibling already knows; Linear fills the rest.
+            let known = ticketID.flatMap { id in sessions.first { $0.ticketID == id && $0.id != rowID } }
+            session.ticketTitle = known?.ticketTitle
+            session.linearProjectName = known?.linearProjectName
+        }
+        update(session)
+        if let ticketID, session.ticketTitle == nil { loadTicketDetails(ticketID, rowID: rowID) }
+        return true
+    }
+
+    /// Tickets other rows are on, for the "Move to Ticket" menu.
+    func ticketIDs(excluding rowID: UUID) -> [String] {
+        let current = sessions.first { $0.id == rowID }?.ticketID
+        let ids = Set(sessions.filter { !$0.isKept }.compactMap(\.ticketID)).subtracting([current].compactMap { $0 })
+        return ids.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+    }
+
     /// Fills in the title and project of a ticket found in a prompt.
     func loadTicketDetails(_ ticketID: String, rowID: UUID) {
         guard let source = ticketSource, source.isConnected, let service = source.service else { return }

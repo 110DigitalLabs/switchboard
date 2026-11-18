@@ -27,6 +27,8 @@ final class SessionStore {
     var handoverRequestID: UUID?
     /// The temp or scratch row whose "Delete folder?" dialog is open.
     var closeRequestID: UUID?
+    /// The row whose "Change Ticket…" dialog is open.
+    var ticketEditRequestID: UUID?
 
     /// Claude Code and Codex conversations running in other terminals,
     /// newest first; refreshed by `startWatchingElsewhere()`.

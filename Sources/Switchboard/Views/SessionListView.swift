@@ -49,6 +49,7 @@ struct SessionListView: View {
         .listStyle(.sidebar)
         .environment(\.sessionListFonts, SessionListFonts(settings.sessionListTextSize))
         .modifier(CloseFolderDialog())
+        .modifier(ChangeTicketDialog())
         .confirmationDialog("Resume “\(resumeRequest?.displayTitle ?? "")” here?",
                             isPresented: Binding(get: { resumeRequest != nil },
                                                  set: { if !$0 { resumeRequest = nil } }),
@@ -98,9 +99,57 @@ struct SessionListView: View {
                         Button("Move to Worktree…") { store.handoverRequestID = session.id }
                             .disabled(!session.canMoveToWorktree || store.handoverProgress[session.id] != nil)
                     }
+                    ticketMenu(for: session)
                     Divider()
                     Button("Close Session") { store.requestClose(session.id) }
                 }
+        }
+    }
+}
+
+extension SessionListView {
+    /// Fixes a row that was grouped under the wrong ticket.
+    @ViewBuilder
+    private func ticketMenu(for session: Session) -> some View {
+        let others = store.ticketIDs(excluding: session.id)
+        Menu("Move to Ticket") {
+            ForEach(others, id: \.self) { id in
+                Button(id) { store.setTicket(id, for: session.id) }
+            }
+            if !others.isEmpty { Divider() }
+            Button("Other Ticket…") { store.ticketEditRequestID = session.id }
+            if session.ticketID != nil {
+                Divider()
+                Button("Remove from \(session.ticketID!)") { store.setTicket(nil, for: session.id) }
+            }
+        }
+    }
+}
+
+/// "Move to ticket": type a ticket ID or paste a Linear URL.
+private struct ChangeTicketDialog: ViewModifier {
+    @Environment(SessionStore.self) private var store
+    @State private var text = ""
+
+    func body(content: Content) -> some View {
+        let session = store.ticketEditRequestID.flatMap { id in store.sessions.first { $0.id == id } }
+        content.alert(
+            "Move “\(session?.title ?? "")” to Ticket",
+            isPresented: Binding(get: { session != nil }, set: { if !$0 { store.ticketEditRequestID = nil } }),
+            presenting: session
+        ) { session in
+            TextField("ENG-123 or Linear URL", text: $text)
+            Button("Move") {
+                if !store.setTicket(text, for: session.id) {
+                    store.errorMessage = "“\(text)” is not a ticket ID or Linear URL."
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { _ in
+            Text("The session moves to that ticket's group. Leave it empty to take it out of any ticket.")
+        }
+        .onChange(of: store.ticketEditRequestID) { _, id in
+            text = id.flatMap { id in store.sessions.first { $0.id == id }?.ticketID } ?? ""
         }
     }
 }

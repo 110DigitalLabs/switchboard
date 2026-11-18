@@ -71,3 +71,52 @@ struct SessionStoreEventTests {
         #expect(store.sessions[0].agentModel == "Opus")
     }
 }
+
+@MainActor
+struct SetTicketTests {
+    private func makeStore() -> (SessionStore, Session, Session) {
+        let defaults = UserDefaults(suiteName: "SetTicketTests-\(UUID())")!
+        let store = SessionStore(settings: AppSettings(defaults: defaults))
+        var a = Session(kind: .folder, folderPath: "/tmp/a", agent: .claudeCode)
+        a.ticketID = "ENG-1"
+        a.ticketTitle = "First"
+        var b = Session(kind: .folder, folderPath: "/tmp/b", agent: .claudeCode)
+        b.ticketID = "ENG-2"
+        store.add(a, startTerminal: false)
+        store.add(b, startTerminal: false)
+        return (store, a, b)
+    }
+
+    private func row(_ store: SessionStore, _ id: UUID) -> Session { store.sessions.first { $0.id == id }! }
+
+    @Test func movesToAnotherTicketAndCopiesItsDetails() {
+        let (store, a, b) = makeStore()
+        #expect(store.setTicket("eng-1", for: b.id))
+        #expect(row(store, b.id).ticketID == "ENG-1")
+        #expect(row(store, b.id).ticketTitle == "First")
+        #expect(row(store, b.id).ticketSetByUser)
+        #expect(store.ticketIDs(excluding: a.id).isEmpty)
+    }
+
+    @Test func acceptsLinearURLAndRejectsJunk() {
+        let (store, _, b) = makeStore()
+        #expect(store.setTicket("https://linear.app/acme/issue/OPS-7/some-title", for: b.id))
+        #expect(row(store, b.id).ticketID == "OPS-7")
+        #expect(!store.setTicket("not a ticket", for: b.id))
+        #expect(row(store, b.id).ticketID == "OPS-7")
+    }
+
+    @Test func removingStopsPromptsFromRetagging() {
+        let (store, _, b) = makeStore()
+        store.setTicket(nil, for: b.id)
+        #expect(row(store, b.id).ticketID == nil)
+        #expect(TicketTagging.ticket(toTag: row(store, b.id), prompt: "work on ENG-9", teamKeys: ["ENG"]) == nil)
+    }
+
+    @Test func manualFlagSurvivesPersistence() throws {
+        var s = Session(kind: .folder, folderPath: "/tmp/x", agent: .claudeCode)
+        s.ticketSetByUser = true
+        let decoded = try JSONDecoder().decode(Session.self, from: JSONEncoder().encode(s))
+        #expect(decoded.ticketSetByUser)
+    }
+}
