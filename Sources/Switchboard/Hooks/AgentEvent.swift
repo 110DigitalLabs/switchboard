@@ -25,15 +25,18 @@ struct AgentEvent: Equatable, Sendable {
     var model: String?
     var title: String?
     var transcriptPath: String?
+    /// The agent's working directory (a worktree, for worktree sessions).
+    var cwd: String?
 
     init(rowID: UUID, kind: Kind, conversationID: String? = nil, model: String? = nil,
-         title: String? = nil, transcriptPath: String? = nil) {
+         title: String? = nil, transcriptPath: String? = nil, cwd: String? = nil) {
         self.rowID = rowID
         self.kind = kind
         self.conversationID = conversationID
         self.model = model
         self.title = title
         self.transcriptPath = transcriptPath
+        self.cwd = cwd
     }
 }
 
@@ -58,7 +61,8 @@ enum AgentEventDecoder {
             conversationID: string(json, "session_id") ?? string(json, "thread-id"),
             model: model(in: json),
             title: string(json, "session_name"),
-            transcriptPath: string(json, "transcript_path")
+            transcriptPath: string(json, "transcript_path"),
+            cwd: string(json, "cwd")
         )
     }
 

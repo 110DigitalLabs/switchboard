@@ -1,0 +1,49 @@
+import AppKit
+
+/// Handles Cmd-1…9 and Cmd-Up/Down in the main window. A local key-down
+/// monitor runs before the event reaches the key window, so the focused
+/// terminal view never sees these; every other key passes through untouched.
+@MainActor
+final class KeyboardNavigator {
+    weak var window: NSWindow?
+    private weak var store: SessionStore?
+    private var monitor: Any?
+
+    init(store: SessionStore) {
+        self.store = store
+    }
+
+    func install() {
+        guard monitor == nil else { return }
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            // Local monitors are called on the main thread.
+            MainActor.assumeIsolated {
+                self?.handle(event) == true ? nil : event
+            }
+        }
+    }
+
+    private func handle(_ event: NSEvent) -> Bool {
+        guard let store, let window, event.window === window, window.attachedSheet == nil,
+              let key = NavigationKey(keyCode: event.keyCode, characters: event.charactersIgnoringModifiers,
+                                      modifiers: event.modifierFlags)
+        else { return false }
+        let selected: UUID?
+        switch key {
+        case .position(let position): selected = store.selectVisible(position: position)
+        case .previous: selected = store.selectAdjacent(-1)
+        case .next: selected = store.selectAdjacent(1)
+        }
+        if selected != nil { focusSelectedTerminal() }
+        return true
+    }
+
+    /// The terminal host also focuses a newly swapped-in view; this covers
+    /// re-selecting the current row while focus is in the sidebar.
+    private func focusSelectedTerminal() {
+        DispatchQueue.main.async { [weak self] in
+            guard let view = self?.store?.selectedTerminal?.view, let window = view.window else { return }
+            window.makeFirstResponder(view)
+        }
+    }
+}

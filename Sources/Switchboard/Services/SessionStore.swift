@@ -5,9 +5,18 @@ import Observation
 @MainActor
 @Observable
 final class SessionStore {
-    private(set) var sessions: [Session] = []
+    private(set) var sessions: [Session] = [] {
+        didSet { scheduleSave() }
+    }
     var selectedID: UUID? {
-        didSet { if let selectedID { markViewed(selectedID) } }
+        didSet {
+            if let selectedID { markViewed(selectedID) }
+            scheduleSave()
+        }
+    }
+    /// Collapse keys of section and ticket groups (see `SessionListLayout`).
+    var collapsedGroups: Set<String> = [] {
+        didSet { scheduleSave() }
     }
     var isPickerPresented = false
     var errorMessage: String?
@@ -20,14 +29,20 @@ final class SessionStore {
     @ObservationIgnored var notifier: Notifier?
     /// Whether the app is frontmost; injectable for tests.
     @ObservationIgnored var isAppActive: () -> Bool = { NSApp?.isActive ?? false }
+    @ObservationIgnored let file: SessionFile?
+    @ObservationIgnored var saveTask: Task<Void, Never>?
+    @ObservationIgnored var lastSaved: Data?
 
-    init(settings: AppSettings, hooks: HookInstallation? = nil) {
+    init(settings: AppSettings, hooks: HookInstallation? = nil, file: SessionFile? = nil) {
         self.settings = settings
+        self.file = file
         terminals = TerminalRegistry(hooks: hooks)
     }
 
-    var mainSessions: [Session] { sessions.filter { !$0.kind.isBottomGrouped } }
-    var scratchSessions: [Session] { sessions.filter { $0.kind == .scratch } }
+    var layout: SessionListLayout {
+        SessionOrdering.layout(sessions: sessions, sort: settings.sessionSort,
+                               grouping: settings.sessionGrouping, collapsed: collapsedGroups)
+    }
 
     var selectedTerminal: SessionTerminal? {
         selectedID.flatMap { terminals.terminal(for: $0) }
@@ -59,18 +74,43 @@ final class SessionStore {
     func add(_ session: Session, startTerminal: Bool = true) {
         sessions.append(session)
         guard startTerminal else { return }
+        openTerminal(for: session, launch: .fresh(session, hooks: terminals.hooks))
+        selectedID = session.id
+    }
+
+    func openTerminal(for session: Session, launch: SessionLaunch) {
         let terminal = terminals.makeTerminal(for: session)
         terminal.onExit = { [weak self] _ in self?.setState(.exited, for: session.id) }
-        terminal.start()
-        selectedID = session.id
+        terminal.start(launch)
+    }
+
+    // MARK: Restoring
+
+    /// Loads the saved rows and reopens each one's terminal, resuming its
+    /// agent conversation where possible.
+    func restore() {
+        guard let file else { return }
+        let state = file.load()
+        collapsedGroups = state.collapsedGroups
+        sessions = state.sessions
+        for session in state.sessions {
+            let launch = SessionLaunch.reopen(session, hooks: terminals.hooks)
+            NSLog("Switchboard: restoring row \(session.id) (\(session.agent.rawValue)) in \(launch.directory): \(launch.command ?? "shell only")")
+            openTerminal(for: session, launch: launch)
+        }
+        selectedID = state.selectedID ?? layout.visibleOrder.first
+        NSLog("Switchboard: restored \(state.sessions.count) session(s) from \(file.url.path)")
     }
 
     // MARK: Row actions
 
+    /// Reopens an exited row's shell, resuming its conversation when known
+    /// rather than starting a new worktree.
     func restartShell(_ id: UUID) {
-        guard let terminal = terminals.terminal(for: id), !terminal.isRunning else { return }
+        guard let terminal = terminals.terminal(for: id), !terminal.isRunning,
+              let session = sessions.first(where: { $0.id == id }) else { return }
         setState(.idle, for: id)
-        terminal.start()
+        terminal.start(.reopen(session, hooks: terminals.hooks))
         selectedID = id
     }
 
@@ -80,7 +120,7 @@ final class SessionStore {
         if selectedID == id { selectedID = sessions.last?.id }
     }
 
-    private func setState(_ state: WorkingState, for id: UUID) {
+    func setState(_ state: WorkingState, for id: UUID) {
         guard let index = sessions.firstIndex(where: { $0.id == id }) else { return }
         sessions[index].workingState = state
     }

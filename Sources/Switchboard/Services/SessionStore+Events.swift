@@ -13,11 +13,15 @@ extension SessionStore {
                 if session.agentConversationID != nil {
                     session.agentTitle = nil
                     session.statusText = nil
+                    session.workingDirectory = nil
                 }
                 session.agentConversationID = id
             default:
                 if session.agentConversationID == nil { session.agentConversationID = id }
             }
+        }
+        if let cwd = event.cwd, Self.tracksWorkingDirectory(event.kind) || session.workingDirectory == nil {
+            session.workingDirectory = cwd
         }
         if let model = event.model { session.agentModel = model }
         if let title = event.title { session.agentTitle = title }
@@ -41,6 +45,15 @@ extension SessionStore {
         if session.agentTitle == nil, let path = event.transcriptPath, session.agent == .claudeCode,
            event.kind == .sessionStarted || event.kind == .turnFinished {
             loadTitle(fromTranscript: path, rowID: session.id, conversationID: session.agentConversationID)
+        }
+    }
+
+    /// Events that report where the conversation itself runs. Tool events are
+    /// skipped so a tool's own `cd` cannot move where the row resumes.
+    private static func tracksWorkingDirectory(_ kind: AgentEvent.Kind) -> Bool {
+        switch kind {
+        case .sessionStarted, .promptSubmitted, .turnFinished: true
+        default: false
         }
     }
 

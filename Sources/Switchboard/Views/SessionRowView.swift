@@ -2,6 +2,10 @@ import SwiftUI
 
 struct SessionRowView: View {
     let session: Session
+    /// The ticket with its -A/-B suffix when several sessions share it.
+    var ticketLabel: String?
+
+    private var title: String { session.agentTitle ?? ticketLabel ?? session.title }
 
     var body: some View {
         HStack(spacing: 8) {
@@ -9,8 +13,15 @@ struct SessionRowView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 18)
             VStack(alignment: .leading, spacing: 2) {
-                Text(session.title)
-                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    Text(title)
+                        .lineLimit(1)
+                    if let ticketLabel, session.agentTitle != nil {
+                        Text(ticketLabel)
+                            .font(.caption2.monospaced())
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)

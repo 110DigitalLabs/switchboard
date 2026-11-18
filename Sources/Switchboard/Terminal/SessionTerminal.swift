@@ -9,15 +9,11 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
     var onExit: ((Int32?) -> Void)?
 
     private let rowID: UUID
-    private let folderPath: String
-    private let launchCommand: String
     private let extraEnvironment: [String: String]
     private var pendingCommand: String?
 
     init(session: Session, hooks: HookInstallation?) {
         rowID = session.id
-        folderPath = session.folderPath
-        launchCommand = session.launchCommand(hooks: hooks)
         extraEnvironment = hooks?.environment(for: session.agent) ?? [:]
         view = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         super.init()
@@ -27,13 +23,13 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
 
     var isRunning: Bool { view.process?.running ?? false }
 
-    /// Starts the login shell in the session folder, then types the agent's
-    /// launch command into it so it lands in shell history and can be re-run.
-    func start() {
+    /// Starts the login shell in the launch directory, then types the agent's
+    /// command into it so it lands in shell history and can be re-run.
+    func start(_ launch: SessionLaunch) {
         let base = ProcessInfo.processInfo.environment
         let shell = ShellEnvironment.loginShell(from: base)
         let env = ShellEnvironment.variables(base: base, rowID: rowID, extra: extraEnvironment)
-        pendingCommand = launchCommand
+        pendingCommand = launch.command
 
         view.setProcessOutputHandler { [weak self] in
             Task { @MainActor in self?.shellProducedOutput() }
@@ -43,7 +39,7 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
             args: [],
             environment: ShellEnvironment.pairs(env),
             execName: ShellEnvironment.loginExecName(for: shell),
-            currentDirectory: folderPath
+            currentDirectory: launch.directory
         )
         // Shells with silent startup files print nothing before the prompt.
         Task { @MainActor [weak self] in

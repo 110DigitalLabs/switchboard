@@ -1,17 +1,21 @@
 import Foundation
 
 /// One row: a terminal, a folder, an agent, and later a ticket and PRs.
-struct Session: Codable, Identifiable, Hashable, Sendable {
+struct Session: Identifiable, Hashable, Sendable {
     let id: UUID
     var kind: SessionKind
     var folderPath: String
     var agent: Agent
     let createdAt: Date
 
-    // Filled in by later stages (hooks, Linear, GitHub).
     var agentConversationID: String?
+    /// Where the agent actually runs, from hook payloads. For worktree
+    /// sessions this is the worktree the agent created, not `folderPath`.
+    var workingDirectory: String?
     var agentTitle: String?
     var ticketID: String?
+    /// Filled in by the Linear integration (stage 4).
+    var linearProjectName: String?
     var prURLs: [String] = []
     var agentModel: String?
     /// The agent's latest status-line text, on one line without escapes.

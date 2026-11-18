@@ -5,7 +5,7 @@ import Foundation
 @MainActor
 final class TerminalRegistry {
     private var terminals: [UUID: SessionTerminal] = [:]
-    private let hooks: HookInstallation?
+    let hooks: HookInstallation?
 
     init(hooks: HookInstallation?) {
         self.hooks = hooks

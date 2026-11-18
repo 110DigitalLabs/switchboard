@@ -9,6 +9,8 @@ final class AppSettings {
         static let defaultAgent = "defaultAgent"
         static let homeFolder = "homeFolderPath"
         static let tempCleanupDays = "tempCleanupDays"
+        static let sessionSort = "sessionSort"
+        static let sessionGrouping = "sessionGrouping"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -26,6 +28,14 @@ final class AppSettings {
         didSet { defaults.set(tempCleanupDays, forKey: Key.tempCleanupDays) }
     }
 
+    var sessionSort: SessionSort {
+        didSet { defaults.set(sessionSort.rawValue, forKey: Key.sessionSort) }
+    }
+
+    var sessionGrouping: SessionGrouping {
+        didSet { defaults.set(sessionGrouping.rawValue, forKey: Key.sessionGrouping) }
+    }
+
     var homeFolder: URL { URL(fileURLWithPath: homeFolderPath, isDirectory: true) }
 
     init(defaults: UserDefaults = .standard) {
@@ -34,6 +44,8 @@ final class AppSettings {
         homeFolderPath = defaults.string(forKey: Key.homeFolder) ?? Self.defaultHomeFolder()
         let days = defaults.integer(forKey: Key.tempCleanupDays)
         tempCleanupDays = days > 0 ? days : 30
+        sessionSort = defaults.string(forKey: Key.sessionSort).flatMap(SessionSort.init(rawValue:)) ?? .ticket
+        sessionGrouping = defaults.string(forKey: Key.sessionGrouping).flatMap(SessionGrouping.init(rawValue:)) ?? .none
     }
 
     static func defaultHomeFolder() -> String {
