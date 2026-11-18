@@ -23,6 +23,9 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
         view = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         super.init()
         view.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+        // SwiftTerm's own default text is a fixed mid grey, dim on a dark
+        // background. The system text colors follow light and dark mode.
+        view.configureNativeColors()
         view.processDelegate = self
     }
 
