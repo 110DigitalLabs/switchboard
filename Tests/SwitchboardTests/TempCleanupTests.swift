@@ -233,6 +233,57 @@ struct SessionStoreClosingTests {
         #expect(trashed().isEmpty)
     }
 
+    @Test func deleteRefusesWhenAnotherRowIsInsideOrContainsTheFolder() throws {
+        let (store, home, trashed) = try setup()
+        let target = try folder(home, "tickets/ENG-3")
+        let nested = try folder(home, "tickets/ENG-3/sub")
+
+        // Another row's folder inside the target.
+        let a = Session(kind: .temp, folderPath: target, agent: .claudeCode)
+        let inside = Session(kind: .folder, folderPath: nested, agent: .claudeCode)
+        store.add(a, startTerminal: false)
+        store.add(inside, startTerminal: false)
+        store.closeDeletingFolder(a.id)
+        #expect(trashed().isEmpty)
+        store.close(inside.id)
+
+        // Another row's working directory inside the target.
+        let b = Session(kind: .temp, folderPath: target, agent: .claudeCode)
+        var worker = Session(kind: .worktree, folderPath: try folder(home, "api"), agent: .claudeCode)
+        worker.workingDirectory = nested
+        store.add(b, startTerminal: false)
+        store.add(worker, startTerminal: false)
+        store.closeDeletingFolder(b.id)
+        #expect(trashed().isEmpty)
+        store.close(worker.id)
+
+        // Another row's folder containing the target.
+        let c = Session(kind: .scratch, folderPath: nested, agent: .claudeCode)
+        let outer = Session(kind: .folder, folderPath: target, agent: .claudeCode)
+        store.add(c, startTerminal: false)
+        store.add(outer, startTerminal: false)
+        store.closeDeletingFolder(c.id)
+        #expect(trashed().isEmpty)
+        store.close(outer.id)
+
+        // A sibling whose name only shares a prefix does not block deletion.
+        let d = Session(kind: .temp, folderPath: target, agent: .claudeCode)
+        let sibling = Session(kind: .temp, folderPath: try folder(home, "tickets/ENG-30"), agent: .claudeCode)
+        store.add(d, startTerminal: false)
+        store.add(sibling, startTerminal: false)
+        store.closeDeletingFolder(d.id)
+        #expect(trashed() == [TempFolderSafety.realPath(target)])
+    }
+
+    @Test func overlapCoversEqualInsideContainingAndUnresolvedPaths() {
+        #expect(SessionStore.overlaps("/x/tickets/A", "/x/tickets/A"))
+        #expect(SessionStore.overlaps("/x/tickets/A/b/c", "/x/tickets/A"))
+        #expect(SessionStore.overlaps("/x/tickets", "/x/tickets/A"))
+        #expect(SessionStore.overlaps("/x/tickets/A/../A/b", "/x/tickets/A"))
+        #expect(!SessionStore.overlaps("/x/tickets/AB", "/x/tickets/A"))
+        #expect(!SessionStore.overlaps("/y/other", "/x/tickets/A"))
+    }
+
     @Test func keepLeavesAClosedRowThatCanBeReopenedOrDeleted() throws {
         let (store, home, trashed) = try setup()
         let path = try folder(home, "scratch/1")

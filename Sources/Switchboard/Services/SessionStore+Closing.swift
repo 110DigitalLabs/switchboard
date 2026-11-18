@@ -92,7 +92,7 @@ extension SessionStore {
             let sharedBy = sessions.contains { other in
                 other.id != session.id
                     && [other.folderPath, other.workingDirectory].compactMap { $0 }.contains {
-                        TempFolderSafety.realPath($0) == url.path
+                        Self.overlaps($0, url.path)
                     }
             }
             if sharedBy {
@@ -109,5 +109,13 @@ extension SessionStore {
         }
         NSLog("Switchboard: refused to delete \(session.folderPath): \(refusal)")
         return refusal
+    }
+
+    /// Whether `path` (resolved when it exists) is `folder`, inside it, or
+    /// contains it: trashing `folder` would pull the floor from under it.
+    nonisolated static func overlaps(_ path: String, _ folder: String) -> Bool {
+        let other = TempFolderSafety.realPath(path) ?? (path as NSString).standardizingPath
+        return other == folder || other.hasPrefix(folder + "/") || folder.hasPrefix(other + "/")
+            || other == "/"
     }
 }
