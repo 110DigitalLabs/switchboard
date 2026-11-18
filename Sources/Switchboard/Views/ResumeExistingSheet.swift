@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Lists recent Claude Code and Codex conversations from the agents' own
-/// history, newest first, and reopens the chosen one in a new row.
+/// Lists the Claude Code and Codex conversations running in other
+/// terminals right now, and reopens the chosen one in a new row.
 struct ResumeExistingSheet: View {
     @Environment(SessionStore.self) private var store
     @Environment(\.dismiss) private var dismiss
@@ -29,7 +29,7 @@ struct ResumeExistingSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Resume Existing Conversation").font(.headline)
-            Text("Recent Claude Code and Codex conversations. Quit one in its other terminal before "
+            Text("Claude Code and Codex sessions running in other terminals. Quit one there before "
                  + "resuming it here, so it does not run in two places.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
@@ -60,7 +60,7 @@ struct ResumeExistingSheet: View {
         .padding(16)
         .frame(width: 620)
         .task {
-            conversations = await Task.detached(priority: .userInitiated) { ConversationHistory.recent() }.value
+            conversations = await Task.detached(priority: .userInitiated) { ActiveConversations.list() }.value
         }
         .confirmationDialog("Resume “\(confirming?.displayTitle ?? "")” here?",
                             isPresented: Binding(get: { confirming != nil }, set: { if !$0 { confirming = nil } }),
@@ -68,7 +68,7 @@ struct ResumeExistingSheet: View {
             Button("Resume Anyway") { resume(conversation) }
             Button("Cancel", role: .cancel) {}
         } message: { _ in
-            Text("It was active in the last two minutes and may still be open in another terminal. "
+            Text("It was working in the last two minutes and is still open in another terminal. "
                  + "Running one conversation in two places mixes up its history.")
         }
     }
@@ -78,7 +78,7 @@ struct ResumeExistingSheet: View {
         if conversations == nil {
             ProgressView()
         } else if visible.isEmpty {
-            Text(filter.isEmpty ? "No saved conversations found" : "No matches")
+            Text(filter.isEmpty ? "No sessions running elsewhere" : "No matches")
                 .foregroundStyle(.secondary)
         }
     }
@@ -108,7 +108,7 @@ private struct ConversationRow: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                 if conversation.isRecentlyActive() {
-                    Text("Active now")
+                    Text("Working")
                         .font(.caption2.weight(.semibold))
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)

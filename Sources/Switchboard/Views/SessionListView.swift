@@ -33,7 +33,7 @@ struct SessionListView: View {
                     Text("No sessions")
                         .foregroundStyle(.secondary)
                     Button("Resume Existing…") { store.isResumePresented = true }
-                        .help("Reopen a recent Claude Code or Codex conversation here")
+                        .help("Reopen a Claude Code or Codex session running in another terminal")
                 }
             }
         }

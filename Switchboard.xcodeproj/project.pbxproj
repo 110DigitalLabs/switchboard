@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01025BDA4F5D6948BD16062E /* ActiveConversations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CE3A0BE94F0C7A9B37172A7 /* ActiveConversations.swift */; };
 		013109A1B732D775D6CABFE8 /* TicketFolderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A10C0026F0D5CE04C648028 /* TicketFolderTests.swift */; };
 		01FAB11B53DEF5F5911054B5 /* TicketStatusControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32B3FCB29F4C87AC9EF3B8F5 /* TicketStatusControls.swift */; };
 		060A0ECF66D6A901659A14EE /* SessionStatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F152E6135680F0C8006A152 /* SessionStatusBar.swift */; };
@@ -231,6 +232,7 @@
 		331A79AF23A156D459B16A2A /* TicketTagging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketTagging.swift; sourceTree = "<group>"; };
 		354369761239CEC1D15BBE0D /* LinearAccountRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinearAccountRow.swift; sourceTree = "<group>"; };
 		39D4AD75720BA51D9B20E4A7 /* GeminiHookConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiHookConfig.swift; sourceTree = "<group>"; };
+		3CE3A0BE94F0C7A9B37172A7 /* ActiveConversations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveConversations.swift; sourceTree = "<group>"; };
 		3ECE1C0346F300F0A66C5483 /* MCPResponseParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPResponseParser.swift; sourceTree = "<group>"; };
 		3F152E6135680F0C8006A152 /* SessionStatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStatusBar.swift; sourceTree = "<group>"; };
 		4004C53F482006BE156FAA88 /* Switchboard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Switchboard.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -716,6 +718,7 @@
 		FCDAAD4171B5E25C7861F5A6 /* History */ = {
 			isa = PBXGroup;
 			children = (
+				3CE3A0BE94F0C7A9B37172A7 /* ActiveConversations.swift */,
 				0A53603D58DD4D7A848C1FC8 /* ConversationHistory.swift */,
 				53C959A64F1B9CE975D7B42B /* PastConversation.swift */,
 			);
@@ -866,6 +869,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				01025BDA4F5D6948BD16062E /* ActiveConversations.swift in Sources */,
 				42D5C510FC7B6A1530AA18D8 /* Agent+Resume.swift in Sources */,
 				2A9F6BEBE7137F539CA11C73 /* Agent.swift in Sources */,
 				434CA1EDC8750470177968B9 /* AgentEvent.swift in Sources */,

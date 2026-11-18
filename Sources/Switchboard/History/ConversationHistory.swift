@@ -1,6 +1,6 @@
 import Foundation
 
-/// Lists recent conversations from the agents' own history folders:
+/// Reads conversations from the agents' own history folders:
 ///
 /// - Claude Code: `<config>/projects/<folder>/<id>.jsonl`, one JSON object
 ///   per line, carrying `cwd`, `entrypoint`, user messages and title records.
@@ -10,11 +10,13 @@ import Foundation
 ///
 /// Both formats are the agents' own and undocumented, so reading is lenient:
 /// a file that does not parse is skipped. Transcripts run to hundreds of
-/// megabytes, so only the newest files are opened, and of each only the head
-/// (folder, first prompt) and the tail (latest title).
+/// megabytes, so only the head (folder, first prompt) and the tail (latest
+/// title) of each is read.
 enum ConversationHistory {
     struct Locations: Sendable {
         var claudeProjects: URL
+        /// Claude Code's registry of running sessions, `<pid>.json` each.
+        var claudeSessions: URL
         var codexSessions: URL
         var codexIndex: URL
 
@@ -25,6 +27,7 @@ enum ConversationHistory {
             let codex = environment["CODEX_HOME"].map { URL(fileURLWithPath: $0) }
                 ?? home.appendingPathComponent(".codex")
             return Locations(claudeProjects: claude.appendingPathComponent("projects"),
+                             claudeSessions: claude.appendingPathComponent("sessions"),
                              codexSessions: codex.appendingPathComponent("sessions"),
                              codexIndex: codex.appendingPathComponent("session_index.jsonl"))
         }
@@ -32,25 +35,6 @@ enum ConversationHistory {
 
     static let headBytes = 64 * 1024
     static let tailBytes = 256 * 1024
-
-    /// Newest first, at most `limit`, leaving out conversations whose folder
-    /// no longer exists (the agent resumes by folder).
-    static func recent(limit: Int = 100, in locations: Locations = .standard(),
-                       directoryExists: (String) -> Bool = SessionLaunch.directoryExists) -> [PastConversation] {
-        let claude = firstConversations(in: claudeTranscripts(in: locations.claudeProjects), limit: limit,
-                                        directoryExists: directoryExists) {
-            claudeConversation(at: $0, modified: $1)
-        }
-        let names = codexThreadNames(at: locations.codexIndex)
-        let codex = firstConversations(in: files(under: locations.codexSessions), limit: limit,
-                                       directoryExists: directoryExists) {
-            codexConversation(at: $0, modified: $1, names: names)
-        }
-        return (claude + codex)
-            .sorted { ($0.lastActive, $0.id) > ($1.lastActive, $1.id) }
-            .prefix(limit)
-            .map { $0 }
-    }
 
     // MARK: Claude Code
 
@@ -148,31 +132,6 @@ enum ConversationHistory {
     }
 
     // MARK: Files
-
-    private static func files(under root: URL) -> [URL] {
-        guard let walker = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil) else { return [] }
-        return walker.compactMap { $0 as? URL }.filter { $0.pathExtension == "jsonl" }
-    }
-
-    /// Reads files newest first until `limit` conversations are found.
-    /// Headless runs can far outnumber interactive ones, so up to four times
-    /// `limit` files are opened.
-    private static func firstConversations(in urls: [URL], limit: Int, directoryExists: (String) -> Bool,
-                                           read: (URL, Date) -> PastConversation?) -> [PastConversation] {
-        let newest = urls.compactMap { url in
-            (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate)
-                .map { (url: url, modified: $0) }
-        }
-        .sorted { $0.modified > $1.modified }
-        var found: [PastConversation] = []
-        for file in newest.prefix(limit * 4) {
-            guard found.count < limit else { break }
-            if let conversation = read(file.url, file.modified), directoryExists(conversation.directory) {
-                found.append(conversation)
-            }
-        }
-        return found
-    }
 
     private static func headAndTail(of url: URL, tail tailSize: Int = tailBytes,
                                     head headSize: Int = headBytes) -> (Data, Data)? {

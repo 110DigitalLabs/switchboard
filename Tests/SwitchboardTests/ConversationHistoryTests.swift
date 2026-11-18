@@ -10,6 +10,7 @@ struct ConversationHistoryTests {
         root = FileManager.default.temporaryDirectory.appendingPathComponent("history-\(UUID().uuidString)")
         locations = ConversationHistory.Locations(
             claudeProjects: root.appendingPathComponent("claude/projects"),
+            claudeSessions: root.appendingPathComponent("claude/sessions"),
             codexSessions: root.appendingPathComponent("codex/sessions"),
             codexIndex: root.appendingPathComponent("codex/session_index.jsonl"))
         try FileManager.default.createDirectory(at: locations.claudeProjects, withIntermediateDirectories: true)
@@ -26,6 +27,31 @@ struct ConversationHistoryTests {
         locations.claudeProjects.appendingPathComponent("-Users-me-app/\(id).jsonl")
     }
 
+    private let now = Date(timeIntervalSince1970: 1_800_000_000)
+
+    private func process(_ pid: Int32, _ arguments: String, started: Date? = nil,
+                         parent: Int32 = 1) -> ActiveConversations.RunningProcess {
+        .init(pid: pid, parent: parent, started: started ?? now.addingTimeInterval(-600),
+              arguments: arguments.split(separator: " ").map(String.init))
+    }
+
+    private func register(pid: Int32, id: String, startedAt: Date? = nil, kind: String = "interactive") throws {
+        let millis = Int((startedAt ?? now.addingTimeInterval(-598)).timeIntervalSince1970 * 1000)
+        try write([#"{"pid":\#(pid),"sessionId":"\#(id)","startedAt":\#(millis),"kind":"\#(kind)","cwd":"/Users/me/app"}"#],
+                  to: locations.claudeSessions.appendingPathComponent("\(pid).json"), modified: now)
+    }
+
+    private func claudeTranscript(_ id: String, prompt: String = "hi", modified: Date? = nil) throws {
+        try write([#"{"type":"user","message":{"content":"\#(prompt)"},"cwd":"/Users/me/app","entrypoint":"cli"}"#],
+                  to: claudeFile(id), modified: modified ?? now)
+    }
+
+    private func active(_ processes: [ActiveConversations.RunningProcess],
+                        directories: [Int32: String] = [:]) -> [PastConversation] {
+        ActiveConversations.list(in: locations, processes: processes, workingDirectories: { _ in directories },
+                                 directoryExists: { $0 != "/gone" })
+    }
+
     @Test func readsClaudeFolderPromptAndLatestTitle() throws {
         try write([
             #"{"type":"user","isMeta":true,"message":{"content":"<local-command-caveat>x</local-command-caveat>"},"cwd":"/Users/me/app","entrypoint":"cli"}"#,
@@ -35,46 +61,77 @@ struct ConversationHistoryTests {
             #"{"type":"ai-title","aiTitle":"Later title"}"#,
         ], to: claudeFile("c1"), modified: Date(timeIntervalSince1970: 100))
 
-        let found = ConversationHistory.recent(in: locations, directoryExists: { _ in true })
-        #expect(found == [PastConversation(agent: .claudeCode, conversationID: "c1", directory: "/Users/me/app",
-                                           title: "Auth work", firstPrompt: "fix the login bug",
-                                           lastActive: Date(timeIntervalSince1970: 100))])
+        let found = ConversationHistory.claudeConversation(at: claudeFile("c1"), modified: Date(timeIntervalSince1970: 100))
+        #expect(found == PastConversation(agent: .claudeCode, conversationID: "c1", directory: "/Users/me/app",
+                                          title: "Auth work", firstPrompt: "fix the login bug",
+                                          lastActive: Date(timeIntervalSince1970: 100)))
     }
 
-    @Test func skipsHeadlessClaudeRunsSubagentsAndMissingFolders() throws {
+    @Test func listsOnlyClaudeSessionsWhoseProcessIsRunning() throws {
+        try claudeTranscript("live")
+        try claudeTranscript("closed")
+        try claudeTranscript("reused")
+        try claudeTranscript("headless")
+        try register(pid: 10, id: "live")
+        try register(pid: 11, id: "closed")
+        try register(pid: 12, id: "reused", startedAt: now.addingTimeInterval(-90_000))
+        try register(pid: 13, id: "headless", kind: "print")
+
+        let found = active([process(10, "claude"), process(12, "claude"), process(13, "claude -p x")])
+        #expect(found.map(\.conversationID) == ["live"])
+    }
+
+    @Test func skipsHeadlessClaudeTranscriptsAndMissingFolders() throws {
         try write([#"{"type":"user","message":{"content":"hi"},"cwd":"/Users/me/app","entrypoint":"sdk-py"}"#],
-                  to: claudeFile("sdk"), modified: Date())
-        try write([#"{"type":"user","message":{"content":"hi"},"cwd":"/Users/me/app","entrypoint":"cli"}"#],
-                  to: locations.claudeProjects.appendingPathComponent("-Users-me-app/c2/subagents/agent-1.jsonl"),
-                  modified: Date())
+                  to: claudeFile("sdk"), modified: now)
         try write([#"{"type":"user","message":{"content":"hi"},"cwd":"/gone","entrypoint":"cli"}"#],
-                  to: claudeFile("gone"), modified: Date())
+                  to: claudeFile("gone"), modified: now)
+        try register(pid: 20, id: "sdk")
+        try register(pid: 21, id: "gone")
 
-        #expect(ConversationHistory.recent(in: locations, directoryExists: { $0 != "/gone" }).isEmpty)
+        #expect(active([process(20, "claude"), process(21, "claude")]).isEmpty)
     }
 
-    @Test func readsInteractiveCodexSessionsWithThreadNames() throws {
+    @Test func matchesRunningCodexToItsRollout() throws {
         let day = locations.codexSessions.appendingPathComponent("2026/11/18")
-        try write([#"{"type":"session_meta","payload":{"id":"x1","cwd":"/Users/me/api","source":"cli"}}"#, "{}"],
-                  to: day.appendingPathComponent("rollout-a-x1.jsonl"), modified: Date(timeIntervalSince1970: 300))
-        try write([#"{"type":"session_meta","payload":{"id":"x2","cwd":"/Users/me/api","source":"exec"}}"#],
-                  to: day.appendingPathComponent("rollout-b-x2.jsonl"), modified: Date(timeIntervalSince1970: 400))
-        try write([#"{"id":"x1","thread_name":"Old"}"#, #"{"id":"x1","thread_name":"Rate limiter"}"#],
-                  to: locations.codexIndex, modified: Date())
+        func rollout(_ id: String, cwd: String, created: Date, modified: Date? = nil) throws {
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.dateFormat = "yyyy-MM-dd'T'HH-mm-ss"
+            try write([#"{"type":"session_meta","payload":{"id":"\#(id)","cwd":"\#(cwd)","source":"cli"}}"#, "{}"],
+                      to: day.appendingPathComponent("rollout-\(formatter.string(from: created))-\(id).jsonl"),
+                      modified: modified ?? created.addingTimeInterval(30))
+        }
+        try rollout("before", cwd: "/Users/me/api", created: now.addingTimeInterval(-900))
+        try rollout("mine", cwd: "/Users/me/api", created: now.addingTimeInterval(-300))
+        try rollout("elsewhere", cwd: "/Users/me/web", created: now.addingTimeInterval(-200))
+        // Resuming appends to the original rollout.
+        try rollout("resumed", cwd: "/Users/me/old", created: now.addingTimeInterval(-90_000),
+                    modified: now.addingTimeInterval(-60))
+        try write([#"{"id":"mine","thread_name":"Rate limiter"}"#], to: locations.codexIndex, modified: now)
 
-        let found = ConversationHistory.recent(in: locations, directoryExists: { _ in true })
-        #expect(found.map(\.conversationID) == ["x1"])
-        #expect(found.first?.agent == .codex)
-        #expect(found.first?.title == "Rate limiter")
+        let found = active([
+            process(30, "/opt/homebrew/bin/codex"),
+            process(31, "codex resume resumed"),
+            process(32, "codex exec do-it"),
+            process(33, "codex", parent: 30),
+        ], directories: [30: "/Users/me/api", 33: "/Users/me/web"])
+        #expect(Set(found.map(\.conversationID)) == ["mine", "resumed"])
+        #expect(found.first { $0.conversationID == "mine" }?.title == "Rate limiter")
     }
 
-    @Test func newestFirstAndLimited() throws {
-        for index in 0..<5 {
-            try write([#"{"type":"user","message":{"content":"p\#(index)"},"cwd":"/Users/me/app","entrypoint":"cli"}"#],
-                      to: claudeFile("c\(index)"), modified: Date(timeIntervalSince1970: Double(index)))
-        }
-        let found = ConversationHistory.recent(limit: 3, in: locations, directoryExists: { _ in true })
-        #expect(found.map(\.conversationID) == ["c4", "c3", "c2"])
+    @Test func parsesPsAndLsofOutput() {
+        let ps = """
+          83684 83667 Wed Nov 18 17:19:29 2026     claude --resume c2d7
+            501     1 Sun Nov  8 09:01:02 2026     /opt/homebrew/bin/codex resume x1
+        garbage
+        """
+        let processes = ActiveConversations.parseProcesses(ps)
+        #expect(processes.map(\.pid) == [83684, 501])
+        #expect(processes.last?.arguments == ["/opt/homebrew/bin/codex", "resume", "x1"])
+        #expect(processes.first?.parent == 83667)
+        #expect(ActiveConversations.parseWorkingDirectories("p42\nfcwd\nn/Users/me/my app\np43\nn/tmp\n")
+                == [42: "/Users/me/my app", 43: "/tmp"])
     }
 
     @Test func readsTheTitleFromTheEndOfALongTranscript() throws {
@@ -83,7 +140,7 @@ struct ConversationHistoryTests {
             + Array(repeating: #"{"type":"assistant","text":"\#(filler)"}"#, count: 400)
             + [#"{"type":"ai-title","aiTitle":"Found at the end"}"#]
         try write(lines, to: claudeFile("long"), modified: Date())
-        #expect(ConversationHistory.recent(in: locations, directoryExists: { _ in true }).first?.title
+        #expect(ConversationHistory.claudeConversation(at: claudeFile("long"), modified: Date())?.title
                 == "Found at the end")
     }
 
