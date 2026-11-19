@@ -21,6 +21,14 @@ enum SessionOrdering {
         }
 
         let main = sessions.filter { !$0.kind.isBottomGrouped && !$0.isKept }
+        // In Tickets mode a live scratch or temp session on a ticket sits
+        // under that ticket, not at the bottom, so moving it to a ticket or
+        // starting a planning session from an assigned issue keeps the
+        // ticket visible.
+        let ticketedBottom = grouping == .ticket
+            ? sessions.filter { $0.kind.isBottomGrouped && !$0.isKept && $0.ticketID != nil }
+            : []
+        let onTicket = Set(ticketedBottom.map(\.id))
         var sections: [SessionListLayout.Section] = []
 
         switch grouping {
@@ -41,7 +49,7 @@ enum SessionOrdering {
                     id: "ticket:\(issue.identifier)", ticketID: issue.identifier, title: issue.title,
                     prURLs: [], entries: [], isCollapsed: false, unstartedIssue: issue))
             }
-            let tickets = ticketGroups(main, sort: sort, labels: labels, collapsed: collapsed) + unstarted
+            let tickets = ticketGroups(main + ticketedBottom, sort: sort, labels: labels, collapsed: collapsed) + unstarted
             if !tickets.isEmpty {
                 sections.append(section(ticketsSectionID, "Tickets", tickets))
             }
@@ -51,13 +59,13 @@ enum SessionOrdering {
             }
         }
 
-        let scratch = sessions.filter { $0.kind == .scratch && !$0.isKept }
+        let scratch = sessions.filter { $0.kind == .scratch && !$0.isKept && !onTicket.contains($0.id) }
         if !scratch.isEmpty {
             sections.append(section(scratchSectionID, "Scratch", entries(scratch).map { .session($0) }))
         }
         // Live temp rows, then kept (closed) temp and scratch rows, newest
         // closed first.
-        let temp = sessions.filter { $0.kind == .temp && !$0.isKept }
+        let temp = sessions.filter { $0.kind == .temp && !$0.isKept && !onTicket.contains($0.id) }
         let kept = sessions.filter(\.isKept).sorted {
             ($0.closedAt!, $0.id.uuidString) > ($1.closedAt!, $1.id.uuidString)
         }

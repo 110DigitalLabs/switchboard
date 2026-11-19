@@ -55,6 +55,25 @@ struct SessionOrderingTests {
         #expect(titles(folders) == ["api"])
     }
 
+    @Test func ticketedScratchAndTempJoinTheirTicketInTicketsMode() {
+        let plan = session("plan", ticket: "ENG-7", kind: .temp)
+        let note = session("note", ticket: "ENG-2", kind: .scratch)
+        let loose = session("t", kind: .temp)
+        let issues = [TicketTestSupport.issue("ENG-7", title: "Planned")]
+        let layout = SessionOrdering.layout(sessions: [plan, note, loose], sort: .ticket, grouping: .ticket,
+                                            assigned: issues)
+        #expect(titles(layout) == ["Tickets", "Temp"])
+        let groups = layout.sections[0].items.compactMap { item -> SessionListLayout.TicketGroup? in
+            if case .ticket(let group) = item { group } else { nil }
+        }
+        #expect(groups.map(\.ticketID) == ["ENG-2", "ENG-7"])
+        #expect(groups.allSatisfy { $0.unstartedIssue == nil && $0.entries.count == 1 })
+        #expect(layout.sections[1].items.map(\.id) == [loose.id.uuidString])
+
+        let folders = SessionOrdering.layout(sessions: [plan, note, loose], sort: .ticket, grouping: .folder)
+        #expect(titles(folders) == ["Scratch", "Temp"])
+    }
+
     @Test func folderGroupingMakesOneSectionPerFolder() {
         let sessions = [session("web"), session("api", ticket: "X-2"), session("api", ticket: "X-1")]
         let layout = SessionOrdering.layout(sessions: sessions, sort: .ticket, grouping: .folder)
