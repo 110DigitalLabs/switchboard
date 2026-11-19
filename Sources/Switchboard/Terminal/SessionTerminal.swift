@@ -54,6 +54,19 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
         }
     }
 
+    /// Draws with Metal instead of CoreGraphics. The CoreGraphics path
+    /// redraws on the main thread, which made typing into agents' full-screen
+    /// interfaces lag. SwiftTerm needs the view in a window first; when Metal
+    /// is unavailable the view keeps drawing with CoreGraphics.
+    func useGPURendering() {
+        guard view.window != nil, !view.isUsingMetalRenderer else { return }
+        do {
+            try view.setUseMetal(true)
+        } catch {
+            NSLog("Switchboard: Metal rendering unavailable, using CoreGraphics: \(error)")
+        }
+    }
+
     /// Hangs up the shell the way closing a terminal window does; interactive
     /// shells ignore SIGTERM.
     func terminate() {

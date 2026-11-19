@@ -27,7 +27,9 @@ struct TerminalHostView: NSViewRepresentable {
             view.bottomAnchor.constraint(equalTo: container.bottomAnchor),
         ])
         DispatchQueue.main.async {
-            view.window?.makeFirstResponder(view)
+            guard let window = view.window else { return }
+            terminal.useGPURendering()
+            window.makeFirstResponder(view)
         }
     }
 }
