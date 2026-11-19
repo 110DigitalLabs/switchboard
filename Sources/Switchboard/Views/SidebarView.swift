@@ -25,6 +25,7 @@ struct SidebarView: View {
                 .padding(.bottom, 6)
             Divider()
             SessionListView(actions: actions)
+            UpdateBanner()
         }
         .font(fonts.title)
         .environment(\.sessionListFonts, fonts)

@@ -7,6 +7,7 @@ struct SwitchboardApp: App {
     @State private var linear: LinearAccount
     @State private var github: GitHubAccount
     @State private var ticketStatus = TicketStatusModel()
+    @State private var updater: AppUpdater
     private let hookServices: HookServices
     private let navigator: KeyboardNavigator
 
@@ -54,6 +55,10 @@ struct SwitchboardApp: App {
         _store = State(initialValue: store)
         _linear = State(initialValue: linear)
         _github = State(initialValue: github)
+        let updater = AppUpdater()
+        // Tests must not reach GitHub.
+        if !HookServices.isRunningTests { updater.start() }
+        _updater = State(initialValue: updater)
     }
 
     var body: some Scene {
@@ -64,6 +69,7 @@ struct SwitchboardApp: App {
                 .environment(linear)
                 .environment(github)
                 .environment(ticketStatus)
+                .environment(updater)
                 .background(WindowZoomer(sidebarFraction: settings.sidebarWidth.fraction) { [navigator] in
                     navigator.window = $0
                 })
@@ -75,7 +81,12 @@ struct SwitchboardApp: App {
                     }
                 }
         }
-        .commands { SessionCommands(store: store) }
+        .commands {
+            SessionCommands(store: store)
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") { Task { await updater.checkFromMenu() } }
+            }
+        }
 
         Settings {
             SettingsView()
