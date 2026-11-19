@@ -36,6 +36,7 @@ struct SearchHeaderView: View {
 /// Shown wherever ticket features are greyed out.
 struct LinearSignInHint: View {
     @Environment(LinearAccount.self) private var linear
+    @Environment(\.sessionListFonts) private var fonts
 
     var body: some View {
         HStack(spacing: 4) {
@@ -43,7 +44,7 @@ struct LinearSignInHint: View {
             SettingsLink { Text("Open Settings") }
                 .buttonStyle(.link)
         }
-        .font(.caption)
+        .font(fonts.detail)
         .foregroundStyle(.secondary)
     }
 }

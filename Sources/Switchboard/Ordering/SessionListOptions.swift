@@ -14,20 +14,17 @@ enum SessionSort: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+/// The sidebar's Tickets | Folders switch.
 enum SessionGrouping: String, CaseIterable, Identifiable, Sendable {
-    case none
-    case project
-    case folder
     case ticket
+    case folder
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .none: "None"
-        case .project: "Linear Project"
-        case .folder: "Folder"
-        case .ticket: "Ticket"
+        case .ticket: "Tickets"
+        case .folder: "Folders"
         }
     }
 }

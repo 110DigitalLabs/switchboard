@@ -3,14 +3,20 @@ import SwiftUI
 struct SessionListView: View {
     @Environment(SessionStore.self) private var store
     @Environment(AppSettings.self) private var settings
+    @Environment(LinearAccount.self) private var linear
+    @Environment(\.sessionListFonts) private var fonts
     @State private var resumeRequest: PastConversation?
+    let actions: TicketActions
 
     static let elsewhereSectionID = "elsewhere"
 
     var body: some View {
         @Bindable var store = store
-        let layout = store.layout
+        let layout = store.layout(assigned: linear.isConnected ? linear.assignedIssues : [])
         let shortcuts = layout.shortcutNumbers
+        // Conversations elsewhere have folders but no tickets, so they only
+        // belong on the Folders side.
+        let elsewhere = settings.sessionGrouping == .folder ? store.elsewhere : []
         List(selection: $store.selectedID) {
             ForEach(layout.sections) { section in
                 Section(isExpanded: expansion(section.id)) {
@@ -19,20 +25,16 @@ struct SessionListView: View {
                         case .session(let entry):
                             row(entry, shortcuts)
                         case .ticket(let group):
-                            DisclosureGroup(isExpanded: expansion(group.id)) {
-                                ForEach(group.entries) { row($0, shortcuts) }
-                            } label: {
-                                TicketGroupRowView(group: group)
-                            }
+                            ticketGroup(group, shortcuts)
                         }
                     }
                 } header: {
-                    Text(section.title)
+                    sectionHeader(section)
                 }
             }
-            if !store.elsewhere.isEmpty {
+            if !elsewhere.isEmpty {
                 Section(isExpanded: expansion(Self.elsewhereSectionID)) {
-                    ForEach(store.elsewhere) { conversation in
+                    ForEach(elsewhere) { conversation in
                         ElsewhereRowView(conversation: conversation)
                             .contentShape(Rectangle())
                             .onTapGesture { resumeRequest = conversation }
@@ -42,12 +44,12 @@ struct SessionListView: View {
                     }
                 } header: {
                     Text("Running Elsewhere")
+                        .font(fonts.detail)
                         .help("Claude Code and Codex sessions open in other terminals. Click one to move it here.")
                 }
             }
         }
         .listStyle(.sidebar)
-        .environment(\.sessionListFonts, SessionListFonts(settings.sessionListTextSize))
         .modifier(CloseFolderDialog())
         .modifier(ChangeTicketDialog())
         .confirmationDialog("Resume “\(resumeRequest?.displayTitle ?? "")” here?",
@@ -62,7 +64,7 @@ struct SessionListView: View {
                  + (conversation.isRecentlyActive() ? "\n\nIt was working in the last two minutes." : ""))
         }
         .overlay {
-            if store.sessions.isEmpty && store.elsewhere.isEmpty {
+            if layout.sections.isEmpty && elsewhere.isEmpty {
                 Text("No sessions")
                     .foregroundStyle(.secondary)
             }
@@ -72,6 +74,44 @@ struct SessionListView: View {
     private func expansion(_ key: String) -> Binding<Bool> {
         Binding(get: { !store.isCollapsed(key) },
                 set: { store.setCollapsed(key, !$0) })
+    }
+
+    /// A ticket with sessions nests them; an assigned ticket without any is
+    /// a single dimmed row whose "+" starts the first one.
+    @ViewBuilder
+    private func ticketGroup(_ group: SessionListLayout.TicketGroup, _ shortcuts: [UUID: Int]) -> some View {
+        if let issue = group.unstartedIssue {
+            TicketGroupRowView(group: group, addHelp: actions.startHelp) { actions.start(issue) }
+                .contextMenu {
+                    Button("Start Session") { actions.start(issue) }
+                }
+        } else {
+            DisclosureGroup(isExpanded: expansion(group.id)) {
+                ForEach(group.entries) { row($0, shortcuts) }
+            } label: {
+                TicketGroupRowView(group: group, addHelp: "Another session on \(group.ticketID)") {
+                    if let first = group.entries.first { store.addSibling(of: first.id) }
+                }
+            }
+        }
+    }
+
+    /// Folder sections get a "+" that starts a session in that folder.
+    private func sectionHeader(_ section: SessionListLayout.Section) -> some View {
+        HStack {
+            Text(section.title)
+            Spacer()
+            if let path = section.folderPath {
+                Button {
+                    store.create(.folder(URL(fileURLWithPath: path)), agent: settings.defaultAgent)
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .buttonStyle(.borderless)
+                .help("New \(settings.defaultAgent.displayName) session in \(section.title)")
+            }
+        }
+        .font(fonts.detail)
     }
 
     @ViewBuilder

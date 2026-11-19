@@ -72,9 +72,13 @@ final class SessionStore {
         terminals.apply(settings.terminalAppearance, theme: settings.terminalTheme)
     }
 
-    var layout: SessionListLayout {
-        SessionOrdering.layout(sessions: sessions, sort: settings.sessionSort,
-                               grouping: settings.sessionGrouping, collapsed: collapsedGroups)
+    var layout: SessionListLayout { layout(assigned: []) }
+
+    /// The list as shown, with the user's assigned issues in Tickets mode.
+    /// Unstarted issues have no sessions, so navigation is the same either way.
+    func layout(assigned: [LinearIssue]) -> SessionListLayout {
+        SessionOrdering.layout(sessions: sessions, sort: settings.sessionSort, grouping: settings.sessionGrouping,
+                               assigned: assigned, collapsed: collapsedGroups)
     }
 
     var selectedTerminal: SessionTerminal? {

@@ -9,14 +9,13 @@ struct SidebarView: View {
 
     var body: some View {
         let actions = TicketActions(store: store, settings: settings, linear: linear, github: github)
+        let fonts = SessionListFonts(settings.sessionListTextSize, fontName: settings.terminalAppearance.fontName)
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
                 SearchHeaderView(search: search) {
                     Task { if await actions.submit(search) { search.clear() } }
                 }
-                if search.input == .empty {
-                    AssignedTicketsView(actions: actions)
-                } else {
+                if search.input != .empty {
                     SearchResultsView(search: search, actions: actions)
                 }
             }
@@ -25,8 +24,10 @@ struct SidebarView: View {
                 .padding(.horizontal, 10)
                 .padding(.bottom, 6)
             Divider()
-            SessionListView()
+            SessionListView(actions: actions)
         }
+        .font(fonts.title)
+        .environment(\.sessionListFonts, fonts)
         .task(id: SearchKey(query: search.query, connected: linear.isConnected)) {
             await search.search(using: linear.isConnected ? linear.service : nil)
         }

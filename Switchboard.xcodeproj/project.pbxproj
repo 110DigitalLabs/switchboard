@@ -179,7 +179,6 @@
 		F5852E11A8AAF81CA45915C9 /* AgentEventDecoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDDB7CB2960410A88CFC186F /* AgentEventDecoderTests.swift */; };
 		F75FD598B400947E65B6EDAB /* SessionCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08626CFEC9352F139BE64FB1 /* SessionCommands.swift */; };
 		F81220FD48081A0E7FA3D793 /* MCPParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13652F867EC7547B50A4A4D5 /* MCPParsingTests.swift */; };
-		FBA20D705AB2AF5D737ED0C4 /* AssignedTicketsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D3D8200A0EBB353AAD3817F /* AssignedTicketsView.swift */; };
 		FC745001830D989FD5D6718B /* GeminiHookConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D4AD75720BA51D9B20E4A7 /* GeminiHookConfig.swift */; };
 		FDC4C56BB3F35DA9AC797455 /* PersistedState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A53A8F57F03EB05E3FAA5E /* PersistedState.swift */; };
 		FE5F915E5649AD6320C6B57B /* BrowserWebAuthenticatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E543E0777AFD294D4020AB0 /* BrowserWebAuthenticatorTests.swift */; };
@@ -270,7 +269,6 @@
 		6BE398627253240E76CB4A38 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		6C45B43315ED1188C857B89B /* TerminalHostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalHostView.swift; sourceTree = "<group>"; };
 		6CF3B8F9D52173081D82D7D0 /* DebugLinear.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLinear.swift; sourceTree = "<group>"; };
-		6D3D8200A0EBB353AAD3817F /* AssignedTicketsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssignedTicketsView.swift; sourceTree = "<group>"; };
 		6D72A12F4D1E200827932AA9 /* HookMessageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookMessageTests.swift; sourceTree = "<group>"; };
 		6DDFF5EBC9DCF7F07FEC507B /* OAuthModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthModels.swift; sourceTree = "<group>"; };
 		6E22DDE9E1ED708C02D2A1A4 /* MoveToWorktreeSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveToWorktreeSheet.swift; sourceTree = "<group>"; };
@@ -498,7 +496,6 @@
 		6734D025A0BA2F7566A51985 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				6D3D8200A0EBB353AAD3817F /* AssignedTicketsView.swift */,
 				8B1746452A46C30D4C82BADC /* ContentView.swift */,
 				F4EE8CB1AC978B75E0ECA761 /* ElsewhereRowView.swift */,
 				CC7C05AB1E70FD1386A38F9C /* GitHubAccountRow.swift */,
@@ -893,7 +890,6 @@
 				434CA1EDC8750470177968B9 /* AgentEvent.swift in Sources */,
 				66928A2F19ABF4197B678D73 /* AgentEventKinds.swift in Sources */,
 				1FBB87103F64ACAD8C4B8518 /* AppSettings.swift in Sources */,
-				FBA20D705AB2AF5D737ED0C4 /* AssignedTicketsView.swift in Sources */,
 				A4D36704055BD8A071E79C11 /* CheckoutInspecting.swift in Sources */,
 				370C601A89CBD9DB95AF1DF4 /* ClaudeHookConfig.swift in Sources */,
 				4D2E540716BE5BE027154247 /* ClaudeTranscript.swift in Sources */,

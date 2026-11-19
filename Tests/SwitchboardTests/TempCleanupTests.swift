@@ -50,8 +50,8 @@ struct TempCleanupPolicyTests {
         keptScratch.closedAt = now
         let folder = Session(kind: .folder, folderPath: "/h/api", agent: .claudeCode)
         let layout = SessionOrdering.layout(sessions: [keptScratch, liveTemp, liveScratch, folder],
-                                            sort: .folder, grouping: .none)
-        #expect(layout.sections.map(\.id) == ["sessions", "scratch", "temp"])
+                                            sort: .folder, grouping: .ticket)
+        #expect(layout.sections.map(\.id) == ["no-ticket", "scratch", "temp"])
         let tempIDs = layout.sections[2].items.map(\.id)
         #expect(tempIDs == [liveTemp.id.uuidString, keptScratch.id.uuidString])
         #expect(layout.visibleOrder == [folder.id, liveScratch.id, liveTemp.id])

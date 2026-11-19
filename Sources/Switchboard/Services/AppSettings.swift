@@ -92,7 +92,7 @@ final class AppSettings {
         let days = defaults.integer(forKey: Key.tempCleanupDays)
         tempCleanupDays = days > 0 ? days : 30
         sessionSort = defaults.string(forKey: Key.sessionSort).flatMap(SessionSort.init(rawValue:)) ?? .ticket
-        sessionGrouping = defaults.string(forKey: Key.sessionGrouping).flatMap(SessionGrouping.init(rawValue:)) ?? .none
+        sessionGrouping = defaults.string(forKey: Key.sessionGrouping).flatMap(SessionGrouping.init(rawValue:)) ?? .ticket
         ticketRepoPath = defaults.string(forKey: Key.ticketRepo)
         sidebarWidth = defaults.string(forKey: Key.sidebarWidth).flatMap(SidebarWidth.init(rawValue:)) ?? .third
         sessionListTextSize = defaults.string(forKey: Key.sessionListTextSize)
