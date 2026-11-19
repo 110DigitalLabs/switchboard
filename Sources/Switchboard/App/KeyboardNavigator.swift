@@ -1,11 +1,13 @@
 import AppKit
 
-/// Handles Cmd-1…9 and Cmd-Up/Down in the main window. A local key-down
+/// Handles Cmd-1…9, Cmd-Up/Down and the voice shortcut (Cmd-Shift-Space, and
+/// Escape while listening) in the main window. A local key-down
 /// monitor runs before the event reaches the key window, so the focused
 /// terminal view never sees these; every other key passes through untouched.
 @MainActor
 final class KeyboardNavigator {
     weak var window: NSWindow?
+    var voice: VoiceController?
     private weak var store: SessionStore?
     private var monitor: Any?
 
@@ -25,8 +27,9 @@ final class KeyboardNavigator {
     }
 
     private func handle(_ event: NSEvent) -> Bool {
-        guard let store, let window, event.window === window, window.attachedSheet == nil,
-              let key = NavigationKey(keyCode: event.keyCode, characters: event.charactersIgnoringModifiers,
+        guard let store, let window, event.window === window, window.attachedSheet == nil else { return false }
+        if let voice, handleVoice(event, voice) { return true }
+        guard let key = NavigationKey(keyCode: event.keyCode, characters: event.charactersIgnoringModifiers,
                                       modifiers: event.modifierFlags)
         else { return false }
         let selected: UUID?
@@ -38,6 +41,22 @@ final class KeyboardNavigator {
         if selected != nil { focusSelectedTerminal() }
         return true
     }
+
+    private func handleVoice(_ event: NSEvent, _ voice: VoiceController) -> Bool {
+        let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting([.capsLock, .function])
+        if event.keyCode == Self.spaceKeyCode, modifiers == [.command, .shift] {
+            voice.toggle()
+            return true
+        }
+        if event.keyCode == Self.escapeKeyCode, modifiers.isEmpty, voice.input.isListening {
+            voice.cancel()
+            return true
+        }
+        return false
+    }
+
+    private static let spaceKeyCode: UInt16 = 49
+    private static let escapeKeyCode: UInt16 = 53
 
     /// The terminal host also focuses a newly swapped-in view; this covers
     /// re-selecting the current row while focus is in the sidebar.

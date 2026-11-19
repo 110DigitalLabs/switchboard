@@ -32,7 +32,8 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         # Agents run in Switchboard's terminals, so macOS asks for the
         # microphone on Switchboard's behalf (Claude Code's voice input).
-        NSMicrophoneUsageDescription: Agents running in Switchboard's terminals, such as Claude Code's voice input, use the microphone.
+        NSMicrophoneUsageDescription: Agents running in Switchboard's terminals, such as Claude Code's voice input, use the microphone. Switchboard also listens while you speak to a session.
+        NSSpeechRecognitionUsageDescription: Switchboard turns what you say into text for the selected session, and into commands such as "Switchboard 2".
         CFBundleURLTypes:
           - CFBundleURLName: dev.switchboard.Switchboard.oauth
             CFBundleURLSchemes: [switchboard]

@@ -10,6 +10,7 @@ struct SwitchboardApp: App {
     @State private var updater: AppUpdater
     private let hookServices: HookServices
     private let navigator: KeyboardNavigator
+    private let voice: VoiceController
 
     init() {
         let settings = AppSettings()
@@ -48,8 +49,11 @@ struct SwitchboardApp: App {
         // Tests must not run gh.
         if !HookServices.isRunningTests { github.start() }
         let navigator = KeyboardNavigator(store: store)
+        let voice = VoiceController(store: store)
+        navigator.voice = voice
         navigator.install()
         self.navigator = navigator
+        self.voice = voice
         self.hookServices = hookServices
         _settings = State(initialValue: settings)
         _store = State(initialValue: store)
@@ -64,6 +68,7 @@ struct SwitchboardApp: App {
     var body: some Scene {
         Window("Switchboard", id: "main") {
             ContentView()
+                .overlay(alignment: .bottom) { VoiceIndicator(input: voice.input) }
                 .environment(store)
                 .environment(settings)
                 .environment(linear)
@@ -83,7 +88,7 @@ struct SwitchboardApp: App {
                 }
         }
         .commands {
-            SessionCommands(store: store)
+            SessionCommands(store: store, voice: voice)
             CommandGroup(after: .appInfo) {
                 Button("Check for Updates…") { Task { await updater.checkFromMenu() } }
             }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SessionCommands: Commands {
     let store: SessionStore
+    let voice: VoiceController
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
@@ -19,6 +20,11 @@ struct SessionCommands: Commands {
                 .keyboardShortcut("-", modifiers: .command)
             Button("Actual Text Size") { store.settings.terminalAppearance.fontSize = TerminalAppearance.defaultFontSize }
                 .keyboardShortcut("0", modifiers: .command)
+            Divider()
+            // The shortcut itself is caught by KeyboardNavigator before the
+            // terminal sees it; this item makes it discoverable.
+            Button("Speak to Session") { voice.toggle() }
+                .keyboardShortcut(.space, modifiers: [.command, .shift])
             Divider()
         }
     }
