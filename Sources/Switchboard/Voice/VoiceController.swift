@@ -18,8 +18,6 @@ final class VoiceController {
 
     func toggle() { input.toggle() }
 
-    func cancel() { input.cancel() }
-
     func perform(_ command: VoiceCommand) {
         guard let store else { return }
         switch command {

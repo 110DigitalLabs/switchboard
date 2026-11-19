@@ -13,7 +13,7 @@ struct VoiceIndicator: View {
             case .listening(let partial):
                 capsule {
                     Image(systemName: "mic.fill").foregroundStyle(.red).symbolEffect(.pulse)
-                    Text(partial.isEmpty ? "Listening… (Esc to cancel)" : partial)
+                    Text(partial.isEmpty ? "Listening… ⌘⇧Space to stop" : partial)
                         .foregroundStyle(partial.isEmpty ? .secondary : .primary)
                         .lineLimit(2)
                         .truncationMode(.head)

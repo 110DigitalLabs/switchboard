@@ -1,7 +1,7 @@
 import AppKit
 
-/// Handles Cmd-1…9, Cmd-Up/Down and the voice shortcut (Cmd-Shift-Space, and
-/// Escape while listening) in the main window. A local key-down
+/// Handles Cmd-1…9, Cmd-Up/Down and the voice shortcut (Cmd-Shift-Space,
+/// which both starts and stops listening) in the main window. A local key-down
 /// monitor runs before the event reaches the key window, so the focused
 /// terminal view never sees these; every other key passes through untouched.
 @MainActor
@@ -48,15 +48,10 @@ final class KeyboardNavigator {
             voice.toggle()
             return true
         }
-        if event.keyCode == Self.escapeKeyCode, modifiers.isEmpty, voice.input.isListening {
-            voice.cancel()
-            return true
-        }
         return false
     }
 
     private static let spaceKeyCode: UInt16 = 49
-    private static let escapeKeyCode: UInt16 = 53
 
     /// The terminal host also focuses a newly swapped-in view; this covers
     /// re-selecting the current row while focus is in the sidebar.
