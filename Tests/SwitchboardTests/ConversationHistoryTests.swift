@@ -48,7 +48,8 @@ struct ConversationHistoryTests {
 
     private func active(_ processes: [ActiveConversations.RunningProcess],
                         directories: [Int32: String] = [:]) -> [PastConversation] {
-        ActiveConversations.list(in: locations, processes: processes, workingDirectories: { _ in directories },
+        ActiveConversations.list(in: locations, processes: processes, excludingDescendantsOf: 500,
+                                 workingDirectories: { _ in directories },
                                  directoryExists: { $0 != "/gone" })
     }
 
@@ -79,6 +80,18 @@ struct ConversationHistoryTests {
 
         let found = active([process(10, "claude"), process(12, "claude"), process(13, "claude -p x")])
         #expect(found.map(\.conversationID) == ["live"])
+    }
+
+    @Test func leavesOutAgentsStartedInsideSwitchboardsOwnTerminals() throws {
+        try claudeTranscript("outside")
+        try claudeTranscript("in-row")
+        try register(pid: 30, id: "outside")
+        try register(pid: 31, id: "in-row")
+
+        // 500 is the app, 501 a row's shell, 31 the claude typed into it.
+        let found = active([process(501, "-zsh", parent: 500), process(31, "claude", parent: 501),
+                            process(30, "claude", parent: 2)])
+        #expect(found.map(\.conversationID) == ["outside"])
     }
 
     @Test func skipsHeadlessClaudeTranscriptsAndMissingFolders() throws {

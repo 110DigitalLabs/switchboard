@@ -10,6 +10,9 @@ import Foundation
 ///   by `codex resume <id>` in its arguments, or else to the newest rollout
 ///   in its working folder created since it started. A codex that has not
 ///   been sent a prompt has no rollout yet, and nothing to resume.
+/// - An agent started by hand in one of Switchboard's own terminals is not
+///   elsewhere, even though no hook told its row about it, so anything
+///   descended from this app is left out.
 enum ActiveConversations {
     /// A process from `ps`.
     struct RunningProcess: Equatable, Sendable {
@@ -38,9 +41,12 @@ enum ActiveConversations {
     /// Newest first, leaving out conversations whose folder no longer exists
     /// (the agent resumes by folder).
     static func list(in locations: ConversationHistory.Locations = .standard(),
-                     processes: [RunningProcess] = runningProcesses(),
+                     processes allProcesses: [RunningProcess] = runningProcesses(),
+                     excludingDescendantsOf root: Int32 = ProcessInfo.processInfo.processIdentifier,
                      workingDirectories: ([RunningProcess]) -> [Int32: String] = workingDirectories(of:),
                      directoryExists: (String) -> Bool = SessionLaunch.directoryExists) -> [PastConversation] {
+        let mine = descendants(of: root, in: allProcesses)
+        let processes = allProcesses.filter { !mine.contains($0.pid) }
         let claudeIDs = liveClaudeSessions(registry: claudeRegistry(in: locations.claudeSessions),
                                            processes: processes)
         let claude = ConversationHistory.claudeTranscripts(in: locations.claudeProjects)
@@ -169,6 +175,19 @@ enum ActiveConversations {
     }
 
     // MARK: Processes
+
+    /// Every process below `root`, at any depth.
+    static func descendants(of root: Int32, in processes: [RunningProcess]) -> Set<Int32> {
+        let children = Dictionary(grouping: processes, by: \.parent)
+        var found: Set<Int32> = []
+        var pending = [root]
+        while let pid = pending.popLast() {
+            for child in children[pid] ?? [] where found.insert(child.pid).inserted {
+                pending.append(child.pid)
+            }
+        }
+        return found
+    }
 
     static func runningProcesses() -> [RunningProcess] {
         guard let output = try? ProcessRunner.runBlocking("/bin/ps", ["-axww", "-o", "pid=,ppid=,lstart=,args="],
