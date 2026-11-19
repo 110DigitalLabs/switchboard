@@ -43,8 +43,7 @@ struct TempCleanupPolicyTests {
     }
 
     @Test func keptRowsSitAtTheBottomOfTempAndAreSkippedByNavigation() {
-        var liveTemp = Session(kind: .temp, folderPath: "/h/tickets/A", agent: .claudeCode)
-        liveTemp.ticketID = "ENG-1"
+        let liveTemp = Session(kind: .temp, folderPath: "/h/tickets/A", agent: .claudeCode)
         let liveScratch = Session(kind: .scratch, folderPath: "/h/scratch/1", agent: .claudeCode)
         var keptScratch = Session(kind: .scratch, folderPath: "/h/scratch/2", agent: .claudeCode)
         keptScratch.closedAt = now
