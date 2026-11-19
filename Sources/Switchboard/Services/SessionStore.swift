@@ -108,14 +108,35 @@ final class SessionStore {
     }
 
     /// "+" and Cmd-N: start right away in the repo dropdown's repo with the
-    /// default agent, or open the picker when the dropdown is None or its
-    /// repo is gone.
+    /// default agent, in the repo folder itself rather than a new worktree,
+    /// or open the picker when the dropdown is None or its repo is gone.
     func newSession() {
         if let repo = settings.ticketRepo {
-            create(.repo(repo), agent: settings.defaultAgent)
+            add(Session(kind: .folder, folderPath: repo.url.path, agent: settings.defaultAgent))
         } else {
             isPickerPresented = true
         }
+    }
+
+    /// Cmd-Ctrl-N: a plain terminal in the selected row's folder (its
+    /// worktree when the agent made one), under the same ticket. With no
+    /// row selected it uses the repo dropdown's repo, then the home folder.
+    func newTerminalInActiveFolder() {
+        let source = selectedID.flatMap { id in sessions.first { $0.id == id } }
+        var session = Session(kind: .folder, folderPath: activeFolder, agent: .terminal)
+        session.ticketID = source?.ticketID
+        session.ticketTitle = source?.ticketTitle
+        session.ticketSetByUser = source?.ticketSetByUser ?? false
+        session.linearProjectName = source?.linearProjectName
+        add(session)
+    }
+
+    /// The selected row's folder, or its worktree when the agent made one.
+    var activeFolder: String {
+        let source = selectedID.flatMap { id in sessions.first { $0.id == id } }
+        return source.map { $0.workingDirectory ?? $0.folderPath }
+            ?? settings.ticketRepo?.url.path
+            ?? FileManager.default.homeDirectoryForCurrentUser.path
     }
 
     /// A scratch row whose shell runs `command` instead of an agent, e.g.

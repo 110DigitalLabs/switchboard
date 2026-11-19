@@ -9,6 +9,8 @@ struct SessionCommands: Commands {
                 .keyboardShortcut("n", modifiers: .command)
             Button("New Session In…") { store.isPickerPresented = true }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
+            Button("New Terminal in This Folder") { store.newTerminalInActiveFolder() }
+                .keyboardShortcut("n", modifiers: [.command, .control])
         }
         CommandGroup(after: .toolbar) {
             Button("Bigger Text") { resize(by: 1) }

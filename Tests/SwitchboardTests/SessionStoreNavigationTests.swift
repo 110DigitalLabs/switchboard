@@ -103,4 +103,15 @@ struct SessionStoreNavigationTests {
         #expect(store.isPickerPresented)
         #expect(store.sessions.isEmpty)
     }
+
+    @Test func activeFolderFollowsTheSelectedRowsWorktree() {
+        let store = makeStore()
+        #expect(store.activeFolder == FileManager.default.homeDirectoryForCurrentUser.path)
+        var a = add(store, "a")
+        store.selectedID = a.id
+        #expect(store.activeFolder == "/w/a")
+        a.workingDirectory = "/w/a/.claude/worktrees/x"
+        store.update(a)
+        #expect(store.activeFolder == "/w/a/.claude/worktrees/x")
+    }
 }
