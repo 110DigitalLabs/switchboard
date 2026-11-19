@@ -1,33 +1,32 @@
 import SwiftUI
 
-/// Compact sort and group menus above the session list.
+/// The Tickets | Folders switch and the sort menu above the session list.
 struct SessionListControls: View {
     @Environment(AppSettings.self) private var settings
+    @Environment(\.sessionListFonts) private var fonts
 
     var body: some View {
         @Bindable var settings = settings
-        HStack(spacing: 12) {
+        HStack(spacing: 8) {
+            Picker("Show", selection: $settings.sessionGrouping) {
+                ForEach(SessionGrouping.allCases) { Text($0.label).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
             Menu {
                 Picker("Sort by", selection: $settings.sessionSort) {
                     ForEach(SessionSort.allCases) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.inline)
             } label: {
-                Label("Sort: \(settings.sessionSort.label)", systemImage: "arrow.up.arrow.down")
+                Image(systemName: "arrow.up.arrow.down")
             }
-            Menu {
-                Picker("Group by", selection: $settings.sessionGrouping) {
-                    ForEach(SessionGrouping.allCases) { Text($0.label).tag($0) }
-                }
-                .pickerStyle(.inline)
-            } label: {
-                Label("Group: \(settings.sessionGrouping.label)", systemImage: "square.stack")
-            }
-            Spacer()
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("Sort: \(settings.sessionSort.label)")
         }
-        .menuStyle(.borderlessButton)
-        .fixedSize(horizontal: false, vertical: true)
-        .font(.caption)
+        .font(fonts.detail)
         .foregroundStyle(.secondary)
     }
 }

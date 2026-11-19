@@ -3,6 +3,7 @@ import SwiftUI
 /// The search result for a pasted PR URL: start a review session.
 struct PullRequestSearchRow: View {
     @Environment(GitHubAccount.self) private var github
+    @Environment(\.sessionListFonts) private var fonts
     let ref: PullRequestReference
     let actions: TicketActions
     @State private var pullRequest: PullRequest?
@@ -13,12 +14,12 @@ struct PullRequestSearchRow: View {
             Image(systemName: pullRequest?.displayState.symbolName ?? "arrow.triangle.pull")
                 .foregroundStyle(pullRequest?.displayState.tint ?? .secondary)
             VStack(alignment: .leading, spacing: 1) {
-                Text("\(ref.repo.slug)#\(ref.number)").font(.callout.monospaced())
+                Text("\(ref.repo.slug)#\(ref.number)").font(fonts.title)
                 if let pullRequest {
                     Text(pullRequest.title).foregroundStyle(.secondary).lineLimit(1)
                 } else if !github.isAvailable {
                     Text("GitHub unavailable: the session starts without PR details.")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(fonts.detail).foregroundStyle(.secondary)
                 }
             }
             Spacer(minLength: 4)

@@ -8,25 +8,31 @@ struct SessionRowView: View {
     var handoverProgress: String?
     /// "kept · deletes in N days" for a closed row whose folder was kept.
     var keptNote: String?
+    /// N for the ⌘N shortcut that selects this row, when it has one.
+    var shortcutNumber: Int?
+
+    @Environment(\.sessionListFonts) private var fonts
 
     private var title: String { session.agentTitle ?? ticketLabel ?? session.title }
 
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: session.iconName)
+                .font(fonts.title)
                 .foregroundStyle(.secondary)
                 .frame(width: 18)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(title)
+                        .font(fonts.title)
                         .lineLimit(1)
                     if let ticketLabel, session.agentTitle != nil {
                         Text(ticketLabel)
-                            .font(.caption2.monospaced())
+                            .font(fonts.detailMonospaced)
                             .foregroundStyle(.secondary)
                     } else if let ticketTitle = session.ticketTitle, session.agentTitle == nil {
                         Text(ticketTitle)
-                            .font(.caption)
+                            .font(fonts.detail)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
@@ -36,17 +42,17 @@ struct SessionRowView: View {
                         ProgressView().controlSize(.mini)
                         Text(handoverProgress)
                     }
-                    .font(.caption)
+                    .font(fonts.detail)
                     .foregroundStyle(.secondary)
                 }
                 Text(subtitle)
-                    .font(.caption)
+                    .font(fonts.detail)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 if let keptNote {
                     Text(keptNote)
-                        .font(.caption)
+                        .font(fonts.detail)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -57,6 +63,13 @@ struct SessionRowView: View {
                     .fill(.red)
                     .frame(width: 8, height: 8)
                     .accessibilityLabel("Unread")
+            }
+            if let shortcutNumber {
+                Text("⌘\(shortcutNumber)")
+                    .font(fonts.detail)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                    .help("Press ⌘\(shortcutNumber) to switch to this session")
             }
             if keptNote == nil {
                 StateIndicator(state: session.workingState)

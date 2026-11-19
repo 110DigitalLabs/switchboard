@@ -38,16 +38,28 @@ struct SessionOrderingTests {
         }
     }
 
-    @Test func projectGroupingPutsUnassignedUnderNoProjectLast() {
-        let sessions = [session("a"), session("b", project: "Zeta"), session("c", project: "Alpha")]
-        let layout = SessionOrdering.layout(sessions: sessions, sort: .folder, grouping: .project)
-        #expect(titles(layout) == ["Alpha", "Zeta", "No project"])
+    @Test func assignedTicketsWithoutSessionsFollowActiveOnesInTicketsMode() {
+        let active = session("api", ticket: "ENG-5")
+        let issues = [TicketTestSupport.issue("ENG-1", title: "New"), TicketTestSupport.issue("ENG-5", title: "Taken")]
+        let layout = SessionOrdering.layout(sessions: [active], sort: .ticket, grouping: .ticket, assigned: issues)
+        let groups = layout.sections[0].items.compactMap { item -> SessionListLayout.TicketGroup? in
+            if case .ticket(let group) = item { group } else { nil }
+        }
+        #expect(groups.map(\.ticketID) == ["ENG-5", "ENG-1"])
+        #expect(groups[1].unstartedIssue?.identifier == "ENG-1")
+        #expect(groups[1].title == "New")
+        #expect(groups[1].entries.isEmpty)
+        #expect(layout.visibleOrder == [active.id])
+
+        let folders = SessionOrdering.layout(sessions: [active], sort: .ticket, grouping: .folder, assigned: issues)
+        #expect(titles(folders) == ["api"])
     }
 
     @Test func folderGroupingMakesOneSectionPerFolder() {
         let sessions = [session("web"), session("api", ticket: "X-2"), session("api", ticket: "X-1")]
         let layout = SessionOrdering.layout(sessions: sessions, sort: .ticket, grouping: .folder)
         #expect(titles(layout) == ["api", "web"])
+        #expect(layout.sections.map(\.folderPath) == ["/w/api", "/w/web"])
         #expect(layout.visibleOrder == [sessions[2].id, sessions[1].id, sessions[0].id])
     }
 
@@ -58,9 +70,10 @@ struct SessionOrderingTests {
         let single = session("ops", ticket: "XYZ-9")
         let layout = SessionOrdering.layout(sessions: [loose, second, single, first], sort: .ticket, grouping: .ticket)
 
+        #expect(titles(layout) == ["Tickets", "No Ticket"])
         let items = layout.sections[0].items
         guard case .ticket(let nine) = items[0], case .ticket(let group) = items[1],
-              case .session(let entry) = items[2] else {
+              case .session(let entry) = layout.sections[1].items[0] else {
             Issue.record("unexpected items \(items)")
             return
         }
@@ -80,7 +93,7 @@ struct SessionOrderingTests {
                                                      collapsed: ["ticket:T-1"])
         #expect(collapsedTicket.visibleOrder == [c.id, s.id])
 
-        let collapsedScratch = SessionOrdering.layout(sessions: [a, b, c, s], sort: .ticket, grouping: .none,
+        let collapsedScratch = SessionOrdering.layout(sessions: [a, b, c, s], sort: .ticket, grouping: .folder,
                                                       collapsed: [SessionOrdering.scratchSectionID])
         #expect(collapsedScratch.visibleOrder == [a.id, b.id, c.id])
         #expect(collapsedScratch.sections.last?.isCollapsed == true)

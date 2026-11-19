@@ -28,9 +28,11 @@ struct SessionStoreNavigationTests {
         #expect(store.selectVisible(position: 1) == a.id)
         #expect(store.selectVisible(position: 4) == nil)
         #expect(store.selectedID == a.id)
+        #expect(store.layout.shortcutNumbers == [a.id: 1, b.id: 2, s.id: 3])
 
-        store.setCollapsed("sessions", true)
+        store.setCollapsed(SessionOrdering.noTicketSectionID, true)
         #expect(store.selectVisible(position: 1) == s.id)
+        #expect(store.layout.shortcutNumbers == [s.id: 1])
     }
 
     @Test func adjacentClampsAndStartsFromEnds() {

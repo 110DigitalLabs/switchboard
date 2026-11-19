@@ -5,11 +5,12 @@ struct IssueRowView: View {
     let issue: LinearIssue
     var actionHelp: String
     var action: () -> Void
+    @Environment(\.sessionListFonts) private var fonts
 
     var body: some View {
         HStack(spacing: 6) {
             Text(issue.identifier)
-                .font(.caption.monospaced())
+                .font(fonts.detail)
                 .foregroundStyle(.secondary)
             Text(issue.title)
                 .lineLimit(1)
@@ -17,7 +18,7 @@ struct IssueRowView: View {
             Spacer(minLength: 4)
             if let state = issue.state?.name {
                 Text(state)
-                    .font(.caption2)
+                    .font(fonts.detail)
                     .foregroundStyle(.secondary)
             }
             Button(action: action) {

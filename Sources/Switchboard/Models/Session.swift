@@ -14,6 +14,9 @@ struct Session: Identifiable, Hashable, Sendable {
     var workingDirectory: String?
     var agentTitle: String?
     var ticketID: String?
+    /// The user set or cleared the ticket by hand, so prompts that mention
+    /// a ticket no longer tag this row.
+    var ticketSetByUser = false
     /// The Linear issue's title; display stays agentTitle → ticketID → folder.
     var ticketTitle: String?
     /// Filled in by the Linear integration (stage 4).

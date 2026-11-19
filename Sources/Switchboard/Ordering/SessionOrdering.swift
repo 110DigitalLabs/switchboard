@@ -4,35 +4,26 @@ import Foundation
 enum SessionOrdering {
     static let scratchSectionID = "scratch"
     static let tempSectionID = "temp"
-    static let noProjectTitle = "No project"
+    static let ticketsSectionID = "tickets"
+    static let noTicketSectionID = "no-ticket"
 
+    /// `assigned` are the user's Linear issues; those no session works on
+    /// yet appear in Tickets mode as parents without children.
     static func layout(sessions: [Session], sort: SessionSort, grouping: SessionGrouping,
-                       collapsed: Set<String> = []) -> SessionListLayout {
+                       assigned: [LinearIssue] = [], collapsed: Set<String> = []) -> SessionListLayout {
         let labels = TicketSuffixes.labels(for: sessions)
         func entries(_ group: [Session]) -> [SessionListLayout.Entry] {
             sorted(group, by: sort).map { .init(session: $0, ticketLabel: labels[$0.id]) }
         }
-        func section(_ id: String, _ title: String, _ items: [SessionListLayout.Item]) -> SessionListLayout.Section {
-            .init(id: id, title: title, items: items, isCollapsed: collapsed.contains(id))
+        func section(_ id: String, _ title: String, _ items: [SessionListLayout.Item],
+                     folderPath: String? = nil) -> SessionListLayout.Section {
+            .init(id: id, title: title, items: items, isCollapsed: collapsed.contains(id), folderPath: folderPath)
         }
 
         let main = sessions.filter { !$0.kind.isBottomGrouped && !$0.isKept }
         var sections: [SessionListLayout.Section] = []
 
         switch grouping {
-        case .none:
-            if !main.isEmpty {
-                sections.append(section("sessions", "Sessions", entries(main).map { .session($0) }))
-            }
-        case .project:
-            let groups = Dictionary(grouping: main) { $0.linearProjectName }
-            let named = groups.keys.compactMap { $0 }.sorted(by: precedes)
-            for name in named {
-                sections.append(section("project:\(name)", name, entries(groups[name]!).map { .session($0) }))
-            }
-            if let unassigned = groups[nil] {
-                sections.append(section("project:", noProjectTitle, entries(unassigned).map { .session($0) }))
-            }
         case .folder:
             let groups = Dictionary(grouping: main) { $0.folderPath }
             let paths = groups.keys.sorted {
@@ -41,12 +32,22 @@ enum SessionOrdering {
             }
             for path in paths {
                 let title = URL(fileURLWithPath: path).lastPathComponent
-                sections.append(section("folder:\(path)", title, entries(groups[path]!).map { .session($0) }))
+                sections.append(section("folder:\(path)", title, entries(groups[path]!).map { .session($0) },
+                                        folderPath: path))
             }
         case .ticket:
-            if !main.isEmpty {
-                sections.append(section("sessions", "Sessions", ticketItems(main, sort: sort, labels: labels,
-                                                                            collapsed: collapsed)))
+            let unstarted = TicketSessions.unstarted(assigned, sessions: sessions).map { issue in
+                SessionListLayout.Item.ticket(.init(
+                    id: "ticket:\(issue.identifier)", ticketID: issue.identifier, title: issue.title,
+                    prURLs: [], entries: [], isCollapsed: false, unstartedIssue: issue))
+            }
+            let tickets = ticketGroups(main, sort: sort, labels: labels, collapsed: collapsed) + unstarted
+            if !tickets.isEmpty {
+                sections.append(section(ticketsSectionID, "Tickets", tickets))
+            }
+            let loose = main.filter { $0.ticketID == nil }
+            if !loose.isEmpty {
+                sections.append(section(noTicketSectionID, "No Ticket", entries(loose).map { .session($0) }))
             }
         }
 
@@ -67,22 +68,20 @@ enum SessionOrdering {
         return SessionListLayout(sections: sections)
     }
 
-    /// Ticket parents in ticket order, then sessions without a ticket.
-    private static func ticketItems(_ sessions: [Session], sort: SessionSort, labels: [UUID: String],
+    /// Ticket parents with sessions, in ticket order.
+    private static func ticketGroups(_ sessions: [Session], sort: SessionSort, labels: [UUID: String],
                                      collapsed: Set<String>) -> [SessionListLayout.Item] {
         let byTicket = Dictionary(grouping: sessions.filter { $0.ticketID != nil }) { $0.ticketID! }
-        var items: [SessionListLayout.Item] = byTicket.keys.sorted(by: precedes).map { ticket in
+        return byTicket.keys.sorted(by: precedes).map { ticket in
             let children = sorted(byTicket[ticket]!, by: sort)
             var seen = Set<String>()
             let prs = children.flatMap(\.prURLs).filter { seen.insert($0).inserted }
             let key = "ticket:\(ticket)"
-            return .ticket(.init(id: key, ticketID: ticket, prURLs: prs,
+            return .ticket(.init(id: key, ticketID: ticket, title: children.lazy.compactMap(\.ticketTitle).first,
+                                 prURLs: prs,
                                  entries: children.map { .init(session: $0, ticketLabel: labels[$0.id]) },
                                  isCollapsed: collapsed.contains(key)))
         }
-        items += sorted(sessions.filter { $0.ticketID == nil }, by: sort)
-            .map { .session(.init(session: $0, ticketLabel: nil)) }
-        return items
     }
 
     static func sorted(_ sessions: [Session], by sort: SessionSort) -> [Session] {

@@ -4,6 +4,7 @@ import SwiftUI
 struct SearchResultsView: View {
     @Environment(SessionStore.self) private var store
     @Environment(LinearAccount.self) private var linear
+    @Environment(\.sessionListFonts) private var fonts
     let search: TicketSearchModel
     let actions: TicketActions
 
@@ -20,7 +21,6 @@ struct SearchResultsView: View {
                 if linear.isConnected { textResults } else { signedOutNote }
             }
         }
-        .font(.callout)
     }
 
     private var signedOutNote: some View {
@@ -32,7 +32,7 @@ struct SearchResultsView: View {
         let existing = TicketSessions.existing(for: id, in: store.sessions)
         let labels = TicketSuffixes.labels(for: store.sessions)
         if !existing.isEmpty {
-            Text("Sessions on \(id)").font(.caption).foregroundStyle(.secondary)
+            Text("Sessions on \(id)").font(fonts.detail).foregroundStyle(.secondary)
             ForEach(existing) { session in
                 ExistingSessionRow(session: session, label: labels[session.id] ?? id)
             }

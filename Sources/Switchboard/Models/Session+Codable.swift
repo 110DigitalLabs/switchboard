@@ -8,7 +8,7 @@ extension Session: Codable {
     private enum CodingKeys: String, CodingKey {
         case id, kind, folderPath, agent, createdAt
         case agentConversationID, workingDirectory, agentTitle, ticketID, ticketTitle
-        case linearProjectName, prURLs, agentModel, closedAt
+        case linearProjectName, prURLs, agentModel, closedAt, ticketSetByUser
     }
 
     init(from decoder: Decoder) throws {
@@ -29,6 +29,7 @@ extension Session: Codable {
         prURLs = (try? c.decodeIfPresent([String].self, forKey: .prURLs)) ?? []
         agentModel = Self.nonEmpty(try? c.decodeIfPresent(String.self, forKey: .agentModel))
         closedAt = (try? c.decodeIfPresent(Date.self, forKey: .closedAt)) ?? nil
+        ticketSetByUser = (try? c.decodeIfPresent(Bool.self, forKey: .ticketSetByUser)) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -47,6 +48,7 @@ extension Session: Codable {
         if !prURLs.isEmpty { try c.encode(prURLs, forKey: .prURLs) }
         try c.encodeIfPresent(agentModel, forKey: .agentModel)
         try c.encodeIfPresent(closedAt, forKey: .closedAt)
+        if ticketSetByUser { try c.encode(true, forKey: .ticketSetByUser) }
     }
 
     private static func nonEmpty(_ value: String??) -> String? {
