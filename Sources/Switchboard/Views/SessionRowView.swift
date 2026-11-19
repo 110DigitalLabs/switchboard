@@ -12,6 +12,7 @@ struct SessionRowView: View {
     var shortcutNumber: Int?
 
     @Environment(\.sessionListFonts) private var fonts
+    @Environment(\.terminalPalette) private var palette
 
     private var title: String { session.agentTitle ?? ticketLabel ?? session.title }
 
@@ -45,7 +46,7 @@ struct SessionRowView: View {
                     .font(fonts.detail)
                     .foregroundStyle(.secondary)
                 }
-                Text(subtitle)
+                Text(detailLine)
                     .font(fonts.detail)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -60,7 +61,7 @@ struct SessionRowView: View {
             PRIconsView(urls: session.prURLs)
             if session.hasBadge && keptNote == nil {
                 Circle()
-                    .fill(.red)
+                    .fill(palette.red)
                     .frame(width: 8, height: 8)
                     .accessibilityLabel("Unread")
             }
@@ -72,10 +73,16 @@ struct SessionRowView: View {
                     .help("Press ⌘\(shortcutNumber) to switch to this session")
             }
             if keptNote == nil {
-                StateIndicator(state: session.workingState)
+                StateIndicator(state: session.workingState, palette: palette)
             }
         }
         .padding(.vertical, 2)
+    }
+
+    /// The agent's status line as the terminal shows it, else folder and agent.
+    private var detailLine: AttributedString {
+        session.statusLine.flatMap { ANSIText.firstLine(of: $0, palette: palette) }
+            ?? AttributedString(subtitle)
     }
 
     private var subtitle: String {
@@ -90,6 +97,7 @@ struct SessionRowView: View {
 
 private struct StateIndicator: View {
     let state: WorkingState
+    let palette: TerminalPalette
 
     var body: some View {
         if state == .exited {
@@ -110,10 +118,10 @@ private struct StateIndicator: View {
 
     private var color: Color {
         switch state {
-        case .idle: .gray.opacity(0.5)
-        case .working, .subagentsRunning: .blue
-        case .needsInput: .orange
-        case .finished: .green
+        case .idle: palette.dim
+        case .working, .subagentsRunning: palette.cyan
+        case .needsInput: palette.yellow
+        case .finished: palette.green
         case .exited: .clear
         }
     }

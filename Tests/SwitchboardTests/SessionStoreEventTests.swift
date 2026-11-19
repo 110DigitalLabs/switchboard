@@ -27,6 +27,20 @@ struct SessionStoreEventTests {
         #expect(store.sessions[0].title == "api")
     }
 
+    @Test func keepsTheRenderedStatusLineUntilTheConversationEnds() {
+        let (store, session) = makeStore()
+        store.handle(AgentEvent(rowID: session.id, kind: .sessionStarted, conversationID: "c-1"))
+        store.handle(AgentEvent(rowID: session.id, kind: .statusLine("\u{1B}[36mOpus\u{1B}[0m"), conversationID: "c-1"))
+        #expect(store.sessions[0].statusLine == "\u{1B}[36mOpus\u{1B}[0m")
+
+        store.handle(AgentEvent(rowID: session.id, kind: .sessionStarted, conversationID: "c-2"))
+        #expect(store.sessions[0].statusLine == nil)
+
+        store.handle(AgentEvent(rowID: session.id, kind: .statusLine("ctx"), conversationID: "c-2"))
+        store.handle(AgentEvent(rowID: session.id, kind: .sessionEnded, conversationID: "c-2"))
+        #expect(store.sessions[0].statusLine == nil)
+    }
+
     @Test func subagentEventsDoNotRemapConversation() {
         let (store, session) = makeStore()
         store.handle(AgentEvent(rowID: session.id, kind: .sessionStarted, conversationID: "c-1"))

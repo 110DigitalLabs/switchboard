@@ -50,6 +50,7 @@ struct SessionListView: View {
             }
         }
         .listStyle(.sidebar)
+        .scrollContentBackground(.hidden)
         .modifier(CloseFolderDialog())
         .modifier(ChangeTicketDialog())
         .confirmationDialog("Resume “\(resumeRequest?.displayTitle ?? "")” here?",

@@ -14,9 +14,10 @@ struct PullRequestDisplayTests {
             #expect(pr.displayState == state)
             #expect(pr.displayState.symbolName == symbol)
         }
-        #expect(PullRequestDisplayState.merged.tint == .purple)
-        #expect(PullRequestDisplayState.open.tint == .green)
-        #expect(PullRequestDisplayState.closed.tint == .red)
+        let palette = TerminalPalette(theme: .system)
+        #expect(PullRequestDisplayState.merged.tint(palette) == palette.magenta)
+        #expect(PullRequestDisplayState.open.tint(palette) == palette.green)
+        #expect(PullRequestDisplayState.closed.tint(palette) == palette.red)
     }
 
     @Test func draftThatWasMergedShowsMerged() {

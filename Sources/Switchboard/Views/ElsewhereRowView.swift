@@ -5,6 +5,7 @@ import SwiftUI
 struct ElsewhereRowView: View {
     let conversation: PastConversation
     @Environment(\.sessionListFonts) private var fonts
+    @Environment(\.terminalPalette) private var palette
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -18,8 +19,8 @@ struct ElsewhereRowView: View {
                         .font(.caption2.weight(.semibold))
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
-                        .background(.orange.opacity(0.2), in: Capsule())
-                        .foregroundStyle(.orange)
+                        .background(palette.yellow.opacity(0.2), in: Capsule())
+                        .foregroundStyle(palette.yellow)
                 }
             }
             HStack(spacing: 4) {

@@ -70,6 +70,7 @@ struct SwitchboardApp: App {
                 .environment(github)
                 .environment(ticketStatus)
                 .environment(updater)
+                .environment(\.terminalPalette, TerminalPalette(theme: settings.terminalTheme))
                 .background(WindowZoomer(sidebarFraction: settings.sidebarWidth.fraction) { [navigator] in
                     navigator.window = $0
                 })

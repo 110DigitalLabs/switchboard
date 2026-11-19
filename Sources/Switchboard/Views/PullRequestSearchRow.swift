@@ -4,6 +4,7 @@ import SwiftUI
 struct PullRequestSearchRow: View {
     @Environment(GitHubAccount.self) private var github
     @Environment(\.sessionListFonts) private var fonts
+    @Environment(\.terminalPalette) private var palette
     let ref: PullRequestReference
     let actions: TicketActions
     @State private var pullRequest: PullRequest?
@@ -12,7 +13,7 @@ struct PullRequestSearchRow: View {
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: pullRequest?.displayState.symbolName ?? "arrow.triangle.pull")
-                .foregroundStyle(pullRequest?.displayState.tint ?? .secondary)
+                .foregroundStyle(pullRequest?.displayState.tint(palette) ?? palette.dim)
             VStack(alignment: .leading, spacing: 1) {
                 Text("\(ref.repo.slug)#\(ref.number)").font(fonts.title)
                 if let pullRequest {

@@ -14,6 +14,7 @@ extension SessionStore {
                 if session.agentConversationID != nil {
                     session.agentTitle = nil
                     session.workingDirectory = nil
+                    session.statusLine = nil
                 }
                 session.agentConversationID = id
             default:
@@ -25,6 +26,15 @@ extension SessionStore {
         }
         if let model = event.model { session.agentModel = model }
         if let title = event.title { session.agentTitle = title }
+        switch event.kind {
+        case .statusLine(let output):
+            session.statusLine = output.isEmpty ? nil : output
+        case .sessionEnded:
+            // The model and context it showed belong to a conversation that is over.
+            session.statusLine = nil
+        default:
+            break
+        }
 
         let taggedTicket = TicketTagging.ticket(toTag: session, prompt: event.prompt,
                                                 teamKeys: ticketSource?.teamKeys ?? [])

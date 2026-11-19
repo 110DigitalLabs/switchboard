@@ -5,11 +5,14 @@ struct SidebarView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(LinearAccount.self) private var linear
     @Environment(GitHubAccount.self) private var github
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.terminalPalette) private var palette
     @State private var search = TicketSearchModel()
 
     var body: some View {
         let actions = TicketActions(store: store, settings: settings, linear: linear, github: github)
         let fonts = SessionListFonts(settings.sessionListTextSize, fontName: settings.terminalAppearance.fontName)
+        let theme = settings.terminalTheme
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
                 SearchHeaderView(search: search) {
@@ -29,6 +32,11 @@ struct SidebarView: View {
         }
         .font(fonts.title)
         .environment(\.sessionListFonts, fonts)
+        // The terminal's colors: its text, its dim grey for secondary text,
+        // its background, and light or dark to suit that background.
+        .foregroundStyle(palette.foreground, palette.dim, palette.dim.opacity(0.7))
+        .background(palette.background)
+        .environment(\.colorScheme, theme.background == nil ? colorScheme : (theme.isDark ? .dark : .light))
         .task(id: SearchKey(query: search.query, connected: linear.isConnected)) {
             await search.search(using: linear.isConnected ? linear.service : nil)
         }

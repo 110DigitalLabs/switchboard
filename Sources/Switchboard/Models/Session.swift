@@ -23,6 +23,9 @@ struct Session: Identifiable, Hashable, Sendable {
     var linearProjectName: String?
     var prURLs: [String] = []
     var agentModel: String?
+    /// The user's own Claude Code status line as last rendered, escape codes
+    /// and all. Live only: not saved.
+    var statusLine: String?
     var activity = RowActivity()
     /// Shown on the row from a finished / needs-input event until it is viewed.
     var hasBadge = false

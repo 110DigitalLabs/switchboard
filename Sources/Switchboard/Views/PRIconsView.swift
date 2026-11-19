@@ -17,6 +17,7 @@ struct PRIconsView: View {
 
 private struct PRIcon: View {
     @Environment(\.openURL) private var openURL
+    @Environment(\.terminalPalette) private var palette
     let url: String
     let pullRequest: PullRequest?
     let isAvailable: Bool
@@ -28,7 +29,7 @@ private struct PRIcon: View {
             if let link = URL(string: url) { openURL(link) }
         } label: {
             Image(systemName: state.symbolName)
-                .foregroundStyle(isAvailable ? state.tint : .secondary)
+                .foregroundStyle(isAvailable ? state.tint(palette) : palette.dim)
                 .opacity(isAvailable ? 1 : 0.6)
         }
         .buttonStyle(.borderless)
@@ -44,12 +45,12 @@ private struct PRIcon: View {
 }
 
 extension PullRequestDisplayState {
-    var tint: Color {
+    func tint(_ palette: TerminalPalette) -> Color {
         switch self {
-        case .open: .green
-        case .draft, .unknown: .secondary
-        case .closed: .red
-        case .merged: .purple
+        case .open: palette.green
+        case .draft, .unknown: palette.dim
+        case .closed: palette.red
+        case .merged: palette.magenta
         }
     }
 }
