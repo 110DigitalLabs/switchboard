@@ -5,7 +5,7 @@ import SwiftTerm
 /// independent of whether it is on screen.
 @MainActor
 final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
-    let view: LocalProcessTerminalView
+    let view: FocusingTerminalView
     var onExit: ((Int32?) -> Void)?
 
     private let rowID: UUID
@@ -20,7 +20,7 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
         rowID = session.id
         extraEnvironment = hooks?.environment(for: session.agent) ?? [:]
         agentReportsStart = hooks != nil && session.agent.reportsSessionStartReliably
-        view = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        view = FocusingTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         super.init()
         view.processDelegate = self
     }
@@ -163,5 +163,31 @@ final class SessionTerminal: NSObject, LocalProcessTerminalViewDelegate {
         pendingCommand = nil
         pendingDraft = nil
         onExit?(nil)
+    }
+}
+
+/// Takes keyboard focus when clicked. With Metal on, clicks land on
+/// SwiftTerm's drawing subview, which refuses first responder, so AppKit
+/// would leave focus wherever it was (the sidebar's search box, say) and
+/// typing would never reach the terminal.
+final class FocusingTerminalView: LocalProcessTerminalView {
+    override func mouseDown(with event: NSEvent) {
+        takeFocus()
+        super.mouseDown(with: event)
+    }
+
+    override func rightMouseDown(with event: NSEvent) {
+        takeFocus()
+        super.rightMouseDown(with: event)
+    }
+
+    override func otherMouseDown(with event: NSEvent) {
+        takeFocus()
+        super.otherMouseDown(with: event)
+    }
+
+    private func takeFocus() {
+        guard let window, window.firstResponder !== self else { return }
+        window.makeFirstResponder(self)
     }
 }
