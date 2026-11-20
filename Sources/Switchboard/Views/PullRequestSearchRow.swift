@@ -7,6 +7,7 @@ struct PullRequestSearchRow: View {
     @Environment(\.terminalPalette) private var palette
     let ref: PullRequestReference
     let actions: TicketActions
+    let search: TicketSearchModel
     @State private var pullRequest: PullRequest?
     @State private var isStarting = false
 
@@ -32,6 +33,7 @@ struct PullRequestSearchRow: View {
                     Task {
                         await actions.startReview(ref, pullRequest: pullRequest)
                         isStarting = false
+                        search.clear()
                     }
                 }
                 .help("Start a review session (no checkout) and type the PR link into it")

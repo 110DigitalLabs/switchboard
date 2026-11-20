@@ -14,7 +14,7 @@ struct SearchResultsView: View {
             case .empty:
                 EmptyView()
             case .pullRequest(let ref):
-                PullRequestSearchRow(ref: ref, actions: actions)
+                PullRequestSearchRow(ref: ref, actions: actions, search: search)
             case .ticket(let id):
                 if linear.isConnected { ticketResults(id) } else { signedOutNote }
             case .text:
