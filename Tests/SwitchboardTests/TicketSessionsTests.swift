@@ -55,11 +55,9 @@ struct TicketSessionsTests {
 
         let repo = Repo(url: URL(fileURLWithPath: "/home/api"), relativePath: "api")
         let inRepo = TicketSessions.newSession(for: issue, destination: .repo(repo), agent: .claudeCode,
-                                               tempFolder: URL(fileURLWithPath: "/unused"), isRepo: { _ in true })
-        #expect(inRepo.kind == .worktree && inRepo.folderPath == "/home/api")
-        let gemini = TicketSessions.newSession(for: issue, destination: .repo(repo), agent: .geminiCLI,
-                                               tempFolder: URL(fileURLWithPath: "/unused"), isRepo: { _ in true })
-        #expect(gemini.kind == .folder)
+                                               tempFolder: URL(fileURLWithPath: "/unused"))
+        #expect(inRepo.kind == .folder && inRepo.folderPath == "/home/api")
+        #expect(inRepo.launchCommand(hooks: nil)?.contains("-w") == false)
     }
 
     @Test func draftsAreSingleLineAndNotSubmitted() {

@@ -48,8 +48,9 @@ Full-screen window, split 1/3 left, 2/3 right by default (see Settings).
 ## Creating sessions
 - "+" button opens a picker: choose a folder or a ticket, plus an agent
   selector preset to the default agent (overridable per session).
-- Folder that is a git repo: start the agent in worktree mode using the agent's
-  own convention (e.g. `claude -w`, worktrees in `.claude/worktrees/`).
+- Folder that is a git repo: start the agent in the repo folder itself
+  (`claude`, not `claude -w`). Worktrees come only from an explicit move to a
+  worktree, using the agent's own convention (`claude -w`).
 - Folder that is not a repo: start the agent directly in that folder.
 - Scratch session: start in a scratch folder under the home folder, for random
   questions. Lives in a Scratch group.
@@ -64,7 +65,7 @@ Full-screen window, split 1/3 left, 2/3 right by default (see Settings).
 - If nothing local exists:
   - Repo dropdown = none: fetch the ticket, create a temp folder under the home
     folder (e.g. tickets/XYZ-123), and start a planning session there.
-  - Repo dropdown = a repo: go straight to a worktree in that repo.
+  - Repo dropdown = a repo: start the agent in that repo's folder.
 - PR URL: start a session for reviewing that PR (no checkout). Optionally type
   the PR link into the terminal WITHOUT pressing enter, so the user finishes the prompt.
 - The search bar is search only, never a prompt to the agent.

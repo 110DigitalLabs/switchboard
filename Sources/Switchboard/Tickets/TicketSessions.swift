@@ -16,17 +16,17 @@ enum TicketSessions {
         return issues.filter { !started.contains($0.identifier.uppercased()) }
     }
 
-    /// A new session for the issue at a destination. Temp sessions get a
-    /// planning folder that the caller creates.
+    /// A new session for the issue at a destination: the agent starts in the
+    /// repo folder itself, not a new worktree. Temp sessions get a planning
+    /// folder that the caller creates.
     static func newSession(for issue: LinearIssue, destination: TicketDestination, agent: Agent,
-                           tempFolder: URL, isRepo: (URL) -> Bool = RepoScanner.isGitRepo) -> Session {
+                           tempFolder: URL) -> Session {
         var session: Session
         switch destination {
         case .tempFolder:
             session = Session(kind: .temp, folderPath: tempFolder.path, agent: agent)
         case .repo(let repo):
-            session = Session(kind: NewSessionTarget.kind(forFolder: repo.url, agent: agent, isRepo: isRepo),
-                              folderPath: repo.url.path, agent: agent)
+            session = Session(kind: .folder, folderPath: repo.url.path, agent: agent)
         }
         session.attach(issue)
         return session

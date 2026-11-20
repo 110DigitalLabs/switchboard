@@ -92,11 +92,9 @@ final class SessionStore {
             let session: Session
             switch target {
             case .repo(let repo):
-                session = Session(kind: NewSessionTarget.kind(forFolder: repo.url, agent: agent),
-                                  folderPath: repo.url.path, agent: agent)
+                session = Session(kind: .folder, folderPath: repo.url.path, agent: agent)
             case .folder(let url):
-                session = Session(kind: NewSessionTarget.kind(forFolder: url, agent: agent),
-                                  folderPath: url.path, agent: agent)
+                session = Session(kind: .folder, folderPath: url.path, agent: agent)
             case .scratch:
                 let folder = try ScratchFolder.create(in: settings.homeFolder)
                 session = Session(kind: .scratch, folderPath: folder.path, agent: agent)

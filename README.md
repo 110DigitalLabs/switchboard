@@ -21,7 +21,8 @@ Requires macOS 14 (Sonoma) or later, plus at least one agent CLI on your `PATH`:
 
 - **Sessions in a list, terminal on the right.** Pick a folder, a ticket or a
   scratch space, and the agent starts there. In a git repo it starts in the
-  agent's own worktree mode, for example `claude -w`.
+  repo folder itself (`claude`, not `claude -w`); "Move to worktree" hands a
+  session over to the agent's own worktree mode.
 - **Live status.** Rows show the conversation title, the working state
   (working, sub-agents running, needs input, finished) and the agent's latest
   status-line text. "Finished" and "needs input" also arrive as macOS
